@@ -20,14 +20,16 @@ skipped silently during import. If presets are missing after the import, add the
 3. Select the printer **Snapmaker J1 Klipper (0.x nozzle)** that matches your nozzle.
 4. Select the process **0.xx Fine @Snapmaker J1 Klipper (0.x nozzle)**. It is listed
    under *User presets*.
-5. Set your printer's address (Moonraker) at the Wi-Fi/connection icon next to the printer.
+5. Optional: select the filament **IEMAI PETG Matte @Snapmaker J1 Klipper**, or use it as a
+   starting point for other matte PETGs.
+6. Set your printer's address (Moonraker) at the Wi-Fi/connection icon next to the printer.
    The presets contain no host.
 
 To update, import the newer `.orca_printer` the same way. The bundle has a fixed id, so
 OrcaSlicer updates it and asks before it overwrites a preset. It does not create a second copy.
 
 You can also import the single presets from [`profiles/`](profiles) with the same dialog.
-Import the printer before its process.
+Import the printer first.
 
 > **Upgrading from v1.0.0:** the process presets were renamed from
 > `Snapmaker J1 0.x BEST PETG Matte` to the OrcaSlicer naming scheme (see below). The old
@@ -40,7 +42,7 @@ OrcaSlicer combines three kinds of presets for every print:
 | Kind | Decides | In this repository |
 |---|---|---|
 | **Printer** | machine, nozzle size, firmware flavor, start/end G-code | one per nozzle size |
-| **Filament** | temperatures, flow, cooling, max. volumetric speed | none – use OrcaSlicer's Snapmaker/Generic filaments or your own |
+| **Filament** | temperatures, flow, cooling, retraction, max. volumetric speed | one tuned matte PETG; any other OrcaSlicer filament works too |
 | **Process** | layer height, line widths, speeds, walls, infill, seam, support | one per nozzle size |
 
 A preset stores only its differences from the preset it `inherits`. All presets here
@@ -131,6 +133,33 @@ system preset of its nozzle size, and on top of that:
 The speeds are the same for every size. With 0.6 and 0.8 nozzles, the filament's maximum
 volumetric speed usually limits them first.
 
+### Filament preset – `IEMAI PETG Matte @Snapmaker J1 Klipper`
+
+Tuned for IEMAI matte PETG with a **0.4 mm brass nozzle**, together with the
+`0.12 Fine` process. It inherits from OrcaSlicer's `Elegoo PETG @System` (in the
+OrcaFilamentLibrary, available on every installation) and changes:
+
+| Setting | Value | Why |
+|---|---|---|
+| Nozzle temperature | 245 °C first layer, then 235 °C | good adhesion; less stringing and oozing afterwards |
+| Part cooling fan | off on layer 1, 20–40 %, full from layer 4; overhangs 80 % | enough cooling for small details and top surfaces without weakening layer adhesion |
+| Flow ratio | 1.00 | no over-extrusion on top surfaces |
+| Max. volumetric speed | 8 mm³/s | conservative limit for matte PETG |
+| Retraction | 1.0 mm | less stringing between small features |
+| Pressure advance | 0.062 | calibrated for the 0.4 nozzle |
+| Shrinkage XY / Z | 99.5 % | compensates PETG shrinkage |
+| Air filtration / exhaust fan | on, 10 % | |
+
+Notes:
+
+- **Other nozzle sizes:** temperatures, cooling and flow carry over. Pressure advance
+  depends on the nozzle; recalibrate it for 0.2 / 0.6 / 0.8 (*Calibration → Pressure advance*).
+- **Nozzle material:** these values are for **brass**. Hardened steel conducts heat worse;
+  add about 5–10 °C. Matte filaments contain matting additives that wear brass over time.
+  When stringing increases or the line width becomes uneven, check the nozzle.
+- **Other matte PETGs:** use the preset as a starting point, but calibrate flow ratio and
+  pressure advance for each spool brand.
+
 ## Repository layout
 
 | Path | Content |
@@ -139,6 +168,7 @@ volumetric speed usually limits them first.
 | `src/printer.json` | settings shared by all printer presets |
 | `src/start_gcode.gcode` | machine start G-code |
 | `src/process-0.4.json` | the 0.4 process preset (the source for all nozzle sizes) |
+| `src/filament/` | filament presets, used as is |
 | `build.ps1` | generates `profiles/` and `dist/` |
 | `profiles/` | generated single presets |
 | `dist/` | generated `.orca_printer` bundle |
@@ -160,11 +190,13 @@ An `.orca_printer` file is a zip archive:
 bundle_structure.json
 printer/<preset name>.json
 process/<preset name>.json
+filament/<preset name>.json
 ```
 
 The preset files are ordinary OrcaSlicer user presets. They store only the differences from
 their `inherits` system preset, plus `name`, `version` and `printer_settings_id` /
-`print_settings_id`. OrcaSlicer detects the preset type from those last two keys.
+`print_settings_id` / `filament_settings_id`. OrcaSlicer detects the preset type from those
+last keys.
 
 OrcaSlicer 2.4 reads `id`, `name`, `version`, `author` and `description` from
 `bundle_structure.json` and stores the bundle in `user/<user>/_local/<id>/`. OrcaSlicer's

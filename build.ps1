@@ -8,9 +8,10 @@
     printer.json       settings shared by all printer presets (on top of the Snapmaker system presets)
     start_gcode.gcode  machine start G-code (nozzle-parametric)
     process-0.4.json   the hand-tuned 0.4 process preset; the 0.2/0.6/0.8 presets are derived from it
+    filament/*.json    filament presets, used as is
 
   Output:
-    profiles/printer/*.json, profiles/process/*.json   single presets (File > Import > Import Configs)
+    profiles/{printer,process,filament}/*.json         single presets (File > Import > Import Configs)
     dist/Snapmaker-J1-Klipper.orca_printer             bundle with all presets (same import dialog)
 
   The output is deterministic: running the script twice produces byte-identical files.
@@ -129,6 +130,13 @@ foreach ($d in $nozzles) {
     $presets["process/$name.json"] = ConvertTo-PresetJson $p
 }
 
+# ---------------------------------------------------------------- filament presets
+# src/filament/*.json are used as is (normalized formatting)
+Get-ChildItem (Join-Path $src 'filament') -Filter *.json | Sort-Object Name | ForEach-Object {
+    $p = Read-Preset $_.FullName
+    $presets["filament/$($p['name']).json"] = ConvertTo-PresetJson $p
+}
+
 # ---------------------------------------------------------------- write single presets
 $profiles = Join-Path $root 'profiles'
 if (Test-Path $profiles) { Remove-Item $profiles -Recurse -Force }
@@ -149,8 +157,8 @@ $bundle['bundle_type'] = 'printer config bundle'
 $bundle['printer_preset_name'] = "Snapmaker J1 Klipper (0.4 nozzle)"
 $bundle['printer_config']  = @($presets.Keys | Where-Object { $_ -like 'printer/*' })
 $bundle['process_config']  = @($presets.Keys | Where-Object { $_ -like 'process/*' })
-$bundle['filament_config'] = @()
-$bundleJson = (ConvertTo-PresetJson $bundle).Replace('"filament_config": [' + "`n`n`t]", '"filament_config": []')
+$bundle['filament_config'] = @($presets.Keys | Where-Object { $_ -like 'filament/*' })
+$bundleJson = ConvertTo-PresetJson $bundle
 
 $dist = Join-Path $root 'dist'
 New-Item -ItemType Directory -Force $dist | Out-Null
