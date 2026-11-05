@@ -1,0 +1,16 @@
+{
+	"emit_machine_limits_to_gcode": "0",
+	"gcode_flavor": "klipper",
+	"machine_max_acceleration_extruding": ["8000", "8000", "8000", "8000"],
+	"machine_max_acceleration_travel": ["8000", "8000", "8000", "8000"],
+	"machine_max_acceleration_x": ["8000", "8000", "8000", "8000"],
+	"machine_max_acceleration_y": ["5000", "8000"],
+	"machine_max_jerk_x": ["5", "5", "5", "5"],
+	"machine_max_jerk_y": ["5", "5", "5", "5"],
+	"machine_max_speed_x": ["200", "200", "200", "200"],
+	"machine_max_speed_y": ["200", "200", "200", "200"],
+	"printer_extruder_id": ["1", "2"],
+	"printer_extruder_variant": ["Direct Drive Standard", "Direct Drive Standard"],
+	"thumbnails": "48x48/PNG, 300x300/PNG",
+	"version": "2.4.2.0"
+}
