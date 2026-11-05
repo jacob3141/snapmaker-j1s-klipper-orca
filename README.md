@@ -92,3 +92,8 @@ OrcaSlicer 2.4 reads `id`, `name`, `version`, `author` and `description` from
 own *File → Export → Export Preset Bundle* writes no `id`, so every import of such an export
 creates a new bundle. The fixed `id` here prevents that. The legacy keys (`bundle_id`,
 `bundle_type`, `printer_config`, `process_config`) match Orca's own export.
+
+## License
+
+[MIT](LICENSE). The start G-code is based on
+[macdylan/3dp-configs](https://github.com/macdylan/3dp-configs).
