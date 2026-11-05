@@ -124,7 +124,7 @@ foreach ($d in $nozzles) {
         $p['layer_height'] = Fmt ($layer04 * $k)
         foreach ($w in $widths04.Keys) { $p[$w] = Fmt ($widths04[$w] * $k) }
         foreach ($f in $fromParent04.Keys) { $p[$f] = $fromParent04[$f] }
-        $p['top_shell_thickness'] = Fmt (0.6 * $k)
+        $p['top_shell_thickness'] = Fmt ([double]::Parse($proc04['top_shell_thickness'], $inv) * $k)
     }
     $presets["process/$name.json"] = ConvertTo-PresetJson $p
 }

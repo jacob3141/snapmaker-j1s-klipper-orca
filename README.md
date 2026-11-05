@@ -108,6 +108,7 @@ and changes the following:
 | Sparse infill | gyroid |
 | Skirt / brim | 4 skirt loops, no brim |
 | Support | on, interface with filament 1 |
+| Top shell thickness | 0.8 mm (7 layers at 0.12 mm – prevents pillowing on top surfaces) |
 | Precise Z height | on |
 | Resolution | 0.008 mm |
 
@@ -122,10 +123,10 @@ system preset of its nozzle size, and on top of that:
 
 | Preset | Parent | Layer | Outer wall | Inner wall / solid | Top surface | First layer | Top shell |
 |---|---|---|---|---|---|---|---|
-| 0.06 Fine (0.2) | 0.06 Standard | 0.06 | 0.20 | 0.225 | 0.19 | 0.25 | 0.3 mm |
-| 0.12 Fine (0.4) | 0.16 Optimal | 0.12 | 0.40 | 0.45 | 0.38 | 0.50 | 0.6 mm |
-| 0.18 Fine (0.6) | 0.18 Standard | 0.18 | 0.60 | 0.675 | 0.57 | 0.75 | 0.9 mm |
-| 0.24 Fine (0.8) | 0.24 Standard | 0.24 | 0.80 | 0.90 | 0.76 | 1.00 | 1.2 mm |
+| 0.06 Fine (0.2) | 0.06 Standard | 0.06 | 0.20 | 0.225 | 0.19 | 0.25 | 0.4 mm |
+| 0.12 Fine (0.4) | 0.16 Optimal | 0.12 | 0.40 | 0.45 | 0.38 | 0.50 | 0.8 mm |
+| 0.18 Fine (0.6) | 0.18 Standard | 0.18 | 0.60 | 0.675 | 0.57 | 0.75 | 1.2 mm |
+| 0.24 Fine (0.8) | 0.24 Standard | 0.24 | 0.80 | 0.90 | 0.76 | 1.00 | 1.6 mm |
 
 The speeds are the same for every size. With 0.6 and 0.8 nozzles, the filament's maximum
 volumetric speed usually limits them first.

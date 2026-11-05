@@ -26,6 +26,7 @@
 	"sparse_infill_speed": "120",
 	"support_interface_filament": "1",
 	"support_line_width": "0.4",
+	"top_shell_thickness": "0.8",
 	"top_surface_line_width": "0.38",
 	"version": "2.4.0.7"
 }

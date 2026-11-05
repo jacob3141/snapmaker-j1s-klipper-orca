@@ -36,7 +36,7 @@
 	"support_line_width": "0.8",
 	"support_threshold_angle": "25",
 	"top_shell_layers": "5",
-	"top_shell_thickness": "1.2",
+	"top_shell_thickness": "1.6",
 	"top_surface_line_width": "0.76",
 	"version": "2.4.0.7",
 	"wall_loops": "3"
