@@ -11,9 +11,6 @@
 	"during_print_exhaust_fan_speed": [
 		"10"
 	],
-	"fan_max_speed": [
-		"60"
-	],
 	"fan_min_speed": [
 		"20"
 	],
@@ -30,10 +27,13 @@
 		"8"
 	],
 	"filament_retraction_length": [
-		"1.2"
+		"0.8"
+	],
+	"filament_retraction_minimum_travel": [
+		"3"
 	],
 	"filament_retraction_speed": [
-		"35"
+		"25"
 	],
 	"filament_settings_id": [
 		"IEMAI PETG Matte @Snapmaker J1 Klipper"
@@ -47,6 +47,9 @@
 	"filament_vendor": [
 		"IEMAI"
 	],
+	"filament_z_hop": [
+		"0"
+	],
 	"from": "User",
 	"full_fan_speed_layer": [
 		"4"
@@ -54,13 +57,16 @@
 	"inherits": "Elegoo PETG @System",
 	"name": "IEMAI PETG Matte @Snapmaker J1 Klipper",
 	"nozzle_temperature": [
-		"230"
+		"240"
 	],
 	"nozzle_temperature_initial_layer": [
 		"245"
 	],
 	"overhang_fan_speed": [
-		"80"
+		"100"
+	],
+	"overhang_fan_threshold": [
+		"25%"
 	],
 	"pressure_advance": [
 		"0.062"

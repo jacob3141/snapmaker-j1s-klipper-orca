@@ -7,7 +7,7 @@
     bundle.json        bundle id/name/version/author (bump "version" on every release)
     printer.json       settings shared by all printer presets (on top of the Snapmaker system presets)
     start_gcode.gcode  machine start G-code (nozzle-parametric)
-    process-0.4.json   the hand-tuned 0.4 process preset; the 0.2/0.6/0.8 presets are derived from it
+    process-0.4.json   the hand-tuned 0.12 mm / 0.4 nozzle process preset; all others are derived from it
     filament/*.json    filament presets, used as is
 
   Output:
@@ -91,41 +91,68 @@ foreach ($d in $nozzles) {
 }
 
 # ---------------------------------------------------------------- process presets
-# 0.4 is used as is; 0.2/0.6/0.8 are scaled by k = d / 0.4:
-#   layer height and all line widths x k (effective 0.4 widths incl. the inherited ones),
-#   top shell thickness x k, everything else (speeds, seam, infill, support...) unchanged.
-# The 0.4 parent "0.16 Optimal" sets a few non-width values the other nozzle parents
-# lack - they are copied so all sizes behave the same.
+# src/process-0.4.json (0.12 mm, 0.4 nozzle) is the blueprint and is used as is.
+# All other presets are derived from it, one for every layer height OrcaSlicer offers
+# for the J1. They inherit from the system preset with the same nozzle and layer height.
+#
+#   k = d / 0.4
+#   - line widths and top shell thickness x k
+#   - top/bottom shell layers follow from the blueprint's shell thickness (at least 3)
+#   - first layer height stays as in the system parent (it fits nozzle and layer height);
+#     exception: 0.1 mm for all 0.2 nozzle presets
+#   - the blueprint's settings (speeds, seam, infill, no support, no brim...) are unchanged
+#   - $fromBlueprintParent: effective blueprint values that come from its parent
+#     "0.16 Optimal" and differ between the system presets; set explicitly on all of them
 $proc04 = Read-Preset (Join-Path $src 'process-0.4.json')
 $widths04 = [ordered]@{
     line_width = 0.42; inner_wall_line_width = 0.45; sparse_infill_line_width = 0.45; initial_layer_line_width = 0.5
     outer_wall_line_width = 0.4; internal_solid_infill_line_width = 0.45; top_surface_line_width = 0.38; support_line_width = 0.4
 }
-$fromParent04 = @{
-    bottom_shell_layers = '4'; bridge_flow = '1'; elefant_foot_compensation = '0.15'; initial_layer_infill_speed = '80'
-    support_threshold_angle = '25'; top_shell_layers = '5'; wall_loops = '3'
+$fromBlueprintParent = @{
+    bridge_flow = '1'; bridge_speed = '50'; elefant_foot_compensation = '0.15'; initial_layer_infill_speed = '80'
+    initial_layer_speed = '50'; ironing_flow = '10%'; support_threshold_angle = '25'; wall_loops = '3'
 }
-$procParent = @{
-    '0.2' = '0.06 Standard @Snapmaker J1 (0.2 nozzle)'
-    '0.6' = '0.18 Standard @Snapmaker J1 (0.6 nozzle)'
-    '0.8' = '0.24 Standard @Snapmaker J1 (0.8 nozzle)'
-}
-$layer04 = [double]::Parse($proc04['layer_height'], $inv)
+$topShell04    = [double]::Parse($proc04['top_shell_thickness'], $inv)   # 0.8 mm
+$bottomShell04 = 4 * [double]::Parse($proc04['layer_height'], $inv)      # 4 layers x 0.12 mm
 
-foreach ($d in $nozzles) {
-    # Orca naming scheme: "<layer height> <quality> @<printer>" (like the system presets,
-    # e.g. "0.12 Fine @Snapmaker J1 (0.4 nozzle)"); layer height = 0.3 * d -> "Fine"
-    $k = [double]::Parse($d, $inv) / 0.4
-    $name = "$(([math]::Round($layer04 * $k, 2)).ToString('0.00', $inv)) Fine @Snapmaker J1 Klipper ($d nozzle)"
+# nozzle, layer height, quality word of the system parent
+$processes = @(
+    @('0.2', '0.06', 'Standard'), @('0.2', '0.10', 'Standard'), @('0.2', '0.14', 'Standard'),
+    @('0.4', '0.08', 'Extra Fine'), @('0.4', '0.12', ''), @('0.4', '0.16', 'Optimal'),
+    @('0.4', '0.20', 'Standard'), @('0.4', '0.24', 'Draft'), @('0.4', '0.28', 'Extra Draft'),
+    @('0.6', '0.18', 'Standard'), @('0.6', '0.24', 'Standard'), @('0.6', '0.30', 'Standard'),
+    @('0.6', '0.34', 'Standard'), @('0.6', '0.38', 'Standard'), @('0.6', '0.42', 'Draft'),
+    @('0.8', '0.24', 'Standard'), @('0.8', '0.32', 'Standard'), @('0.8', '0.36', 'Standard'),
+    @('0.8', '0.40', 'Standard'), @('0.8', '0.48', 'Draft')
+)
+
+# Quality word from layer height / nozzle diameter, the same for every nozzle size
+function Get-Quality([double]$ratio) {
+    if ($ratio -le 0.2001) { 'Extra Fine' }
+    elseif ($ratio -le 0.3001) { 'Fine' }
+    elseif ($ratio -le 0.4001) { 'Optimal' }
+    elseif ($ratio -le 0.5001) { 'Standard' }
+    elseif ($ratio -le 0.6501) { 'Draft' }
+    else { 'Extra Draft' }
+}
+
+foreach ($entry in $processes) {
+    $d = $entry[0]; $hs = $entry[1]
+    $dv = [double]::Parse($d, $inv); $h = [double]::Parse($hs, $inv); $k = $dv / 0.4
+    # Orca naming scheme: "<layer height> <quality> @<printer>", like the system presets
+    $name = "$hs $(Get-Quality ($h / $dv)) @Snapmaker J1 Klipper ($d nozzle)"
     $p = $proc04.Clone()
     $p['name'] = $name
     $p['print_settings_id'] = $name
-    if ($d -ne '0.4') {
-        $p['inherits'] = $procParent[$d]
-        $p['layer_height'] = Fmt ($layer04 * $k)
+    if ($entry[2]) {
+        $p['inherits'] = "$hs $($entry[2]) @Snapmaker J1 ($d nozzle)"
+        $p['layer_height'] = Fmt $h
         foreach ($w in $widths04.Keys) { $p[$w] = Fmt ($widths04[$w] * $k) }
-        foreach ($f in $fromParent04.Keys) { $p[$f] = $fromParent04[$f] }
-        $p['top_shell_thickness'] = Fmt ([double]::Parse($proc04['top_shell_thickness'], $inv) * $k)
+        foreach ($f in $fromBlueprintParent.Keys) { $p[$f] = $fromBlueprintParent[$f] }
+        $p['top_shell_thickness'] = Fmt ($topShell04 * $k)
+        $p['top_shell_layers'] = [string][math]::Max(3, [math]::Ceiling($topShell04 * $k / $h - 1e-9))
+        $p['bottom_shell_layers'] = [string][math]::Max(3, [math]::Ceiling($bottomShell04 * $k / $h - 1e-9))
+        if ($d -eq '0.2') { $p['initial_layer_print_height'] = '0.1' }
     }
     $presets["process/$name.json"] = ConvertTo-PresetJson $p
 }

@@ -18,8 +18,8 @@ skipped silently during import. If presets are missing after the import, add the
 1. Download [`dist/Snapmaker-J1-Klipper.orca_printer`](dist/Snapmaker-J1-Klipper.orca_printer).
 2. In OrcaSlicer, choose **File → Import → Import Configs…** and select the file.
 3. Select the printer **Snapmaker J1 Klipper (0.x nozzle)** that matches your nozzle.
-4. Select the process **0.xx Fine @Snapmaker J1 Klipper (0.x nozzle)**. It is listed
-   under *User presets*.
+4. Select a process **0.xx … @Snapmaker J1 Klipper (0.x nozzle)**, for example
+   `0.12 Fine`. They are listed under *User presets*.
 5. Optional: select the filament **IEMAI PETG Matte @Snapmaker J1 Klipper**, or use it as a
    starting point for other matte PETGs.
 6. Set your printer's address (Moonraker) at the Wi-Fi/connection icon next to the printer.
@@ -43,7 +43,7 @@ OrcaSlicer combines three kinds of presets for every print:
 |---|---|---|
 | **Printer** | machine, nozzle size, firmware flavor, start/end G-code | one per nozzle size |
 | **Filament** | temperatures, flow, cooling, retraction, max. volumetric speed | one tuned matte PETG; any other OrcaSlicer filament works too |
-| **Process** | layer height, line widths, speeds, walls, infill, seam, support | one per nozzle size |
+| **Process** | layer height, line widths, speeds, walls, infill, seam, support | 20: every layer height OrcaSlicer offers for the J1, per nozzle size |
 
 A preset stores only its differences from the preset it `inherits`. All presets here
 inherit from the Snapmaker J1 system presets. Everything they do not change comes from
@@ -66,6 +66,7 @@ differs from that preset only in these settings:
 | Max. acceleration X / Y / extruding / travel | 10000 / 8000 / 10000 / 10000 | 8000 / 5000 / 8000 / 8000 | closer to what the Klipper configuration allows |
 | Max. speed X / Y | 350 / 300 | 200 / 200 | same reason |
 | Max. jerk X / Y | 10 | 5 | sent as `M205 V` → Klipper `square_corner_velocity` |
+| Nozzle type | – | brass | the nozzles these presets were tuned with |
 | Thumbnails | 300×300 | 48×48 + 300×300 PNG | small preview for Mainsail/Fluidd/KlipperScreen file lists |
 | Start G-code | Snapmaker original | rewritten (see below) | |
 
@@ -86,20 +87,22 @@ The end G-code and the toolchange G-code are inherited **unchanged**. Their comm
 
 The start G-code is based on [macdylan/3dp-configs](https://github.com/macdylan/3dp-configs).
 
-### Process presets – `0.xx Fine @Snapmaker J1 Klipper (0.x nozzle)`
+### Process presets – `0.xx <quality> @Snapmaker J1 Klipper (0.x nozzle)`
 
 **Naming.** The names follow OrcaSlicer's scheme `<layer height> <quality> @<printer>`,
 like the system preset `0.12 Fine @Snapmaker J1 (0.4 nozzle)`:
 
-- *Fine* means a layer height of 0.3 × nozzle diameter.
+- The quality word follows from layer height / nozzle diameter, the same for every nozzle:
+  up to 0.2 *Extra Fine*, 0.3 *Fine*, 0.4 *Optimal*, 0.5 *Standard*, 0.65 *Draft*, above
+  that *Extra Draft*.
 - The `@…` suffix keeps the names unique across nozzle sizes and shows which printer a
   preset belongs to.
 - The names contain no material, because a process preset holds nothing
   material-specific. Temperatures, flow, cooling and volumetric speed belong to the
   filament preset.
 
-**The 0.4 preset is tuned by hand.** It inherits from `0.16 Optimal @Snapmaker J1 (0.4 nozzle)`
-and changes the following:
+**`0.12 Fine` with the 0.4 nozzle is tuned by hand.** It inherits from
+`0.16 Optimal @Snapmaker J1 (0.4 nozzle)` and changes the following:
 
 | Setting | Value |
 |---|---|
@@ -109,29 +112,40 @@ and changes the following:
 | Seam | aligned, back |
 | Sparse infill | gyroid |
 | Skirt / brim | 4 skirt loops, no brim |
-| Support | on, interface with filament 1 |
+| Support | off (interface filament 1 if you switch it on) |
+| Overhangs | extra perimeters on overhangs, slow down for curled perimeters |
+| Arc fitting | off |
+| Max. volumetric extrusion rate slope | 300 mm³/s² |
 | Top shell thickness | 0.8 mm (7 layers at 0.12 mm – prevents pillowing on top surfaces) |
 | Precise Z height | on |
 | Resolution | 0.008 mm |
 
-**The 0.2 / 0.6 / 0.8 presets are derived from it** by `build.ps1`. Each inherits from the
-system preset of its nozzle size, and on top of that:
+**All other presets are derived from it** by `build.ps1`. Each inherits from the system
+preset with the same nozzle and layer height, and on top of that:
 
-- Layer height, all line widths and the top shell thickness scale with `d / 0.4`.
-- The values the 0.4 preset gets from *0.16 Optimal* are copied, because the other system
-  parents do not set them (they would fall back to Orca's generic defaults): 3 walls, 5 top / 4 bottom layers, elephant foot 0.15,
-  bridge flow 1, support threshold 25°, first-layer infill 80 mm/s.
-- Everything else is the same as in the 0.4 preset.
+- All line widths and the top shell thickness scale with `d / 0.4`.
+- Top and bottom layers follow from the shell thickness (at least 3 each).
+- The first layer height stays as in the system preset, except 0.1 mm for all 0.2 nozzle
+  presets.
+- The values `0.12 Fine` gets from *0.16 Optimal* are set explicitly, because the system
+  presets differ in them: 3 walls, elephant foot 0.15, bridge flow 1, bridge 50 mm/s, support
+  threshold 25°, first layer 50 mm/s, first-layer infill 80 mm/s.
+- Everything else is the same as in `0.12 Fine`: speeds, seam, infill, no support, no brim,
+  overhang handling.
 
-| Preset | Parent | Layer | Outer wall | Inner wall / solid | Top surface | First layer | Top shell |
-|---|---|---|---|---|---|---|---|
-| 0.06 Fine (0.2) | 0.06 Standard | 0.06 | 0.20 | 0.225 | 0.19 | 0.25 | 0.4 mm |
-| 0.12 Fine (0.4) | 0.16 Optimal | 0.12 | 0.40 | 0.45 | 0.38 | 0.50 | 0.8 mm |
-| 0.18 Fine (0.6) | 0.18 Standard | 0.18 | 0.60 | 0.675 | 0.57 | 0.75 | 1.2 mm |
-| 0.24 Fine (0.8) | 0.24 Standard | 0.24 | 0.80 | 0.90 | 0.76 | 1.00 | 1.6 mm |
+| Nozzle | Layer heights (quality) | Outer wall | Inner wall / solid | Top surface | First layer width | Top shell |
+|---|---|---|---|---|---|---|
+| 0.2 | 0.06 Fine, 0.10 Standard, 0.14 Extra Draft | 0.20 | 0.225 | 0.19 | 0.25 | 0.4 mm |
+| 0.4 | 0.08 Extra Fine, **0.12 Fine**, 0.16 Optimal, 0.20 Standard, 0.24 Draft, 0.28 Extra Draft | 0.40 | 0.45 | 0.38 | 0.50 | 0.8 mm |
+| 0.6 | 0.18 Fine, 0.24 Optimal, 0.30 Standard, 0.34 Draft, 0.38 Draft, 0.42 Extra Draft | 0.60 | 0.675 | 0.57 | 0.75 | 1.2 mm |
+| 0.8 | 0.24 Fine, 0.32 Optimal, 0.36 Standard, 0.40 Standard, 0.48 Draft | 0.80 | 0.90 | 0.76 | 1.00 | 1.6 mm |
 
-The speeds are the same for every size. With 0.6 and 0.8 nozzles, the filament's maximum
-volumetric speed usually limits them first.
+**Only `0.12 Fine` with the 0.4 nozzle has been print-tested.** The others are calculated
+from it. Very low layers such as `0.08 Extra Fine` showed poor layer adhesion with matte PETG:
+parts tore at retractions. Prefer 0.12 mm or higher for this material.
+
+The speeds are the same for every size. With larger nozzles and layer heights, the filament's
+maximum volumetric speed usually limits them first.
 
 ### Filament preset – `IEMAI PETG Matte @Snapmaker J1 Klipper`
 
@@ -141,11 +155,13 @@ OrcaFilamentLibrary, available on every installation) and changes:
 
 | Setting | Value | Why |
 |---|---|---|
-| Nozzle temperature | 245 °C first layer, then 230 °C | good adhesion; less stringing and oozing afterwards |
-| Part cooling fan | off on layer 1, 20 % on normal layers, up to 60 % on short layers (small features), full from layer 4; overhangs 80 % | cools small details and top surfaces without weakening layer adhesion on larger parts |
+| Nozzle temperature | 245 °C first layer, then 240 °C | good bed and layer adhesion |
+| Part cooling fan | off on layer 1, 20 % on long layers, up to 40 % on short layers, target speed from layer 4 | cools small details and top surfaces without weakening layer adhesion |
+| Overhang fan | 100 % from 25 % overhang | cools only where edges would curl up |
 | Flow ratio | 1.00 | no over-extrusion on top surfaces |
 | Max. volumetric speed | 8 mm³/s | conservative limit for matte PETG |
-| Retraction | 1.2 mm at 35 mm/s | less stringing between small features (Klipper allows up to 40 mm/s) |
+| Retraction | 0.8 mm at 25 mm/s, only from 3 mm travel | less pull on freshly printed lines |
+| Z-hop | off | the nozzle does not lift the sticky PETG |
 | Pressure advance | 0.062 | calibrated for the 0.4 nozzle |
 | Shrinkage XY / Z | 99.5 % | compensates PETG shrinkage |
 | Air filtration / exhaust fan | on, 10 % | |
