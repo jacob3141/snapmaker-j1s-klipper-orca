@@ -112,12 +112,14 @@ $procParent = @{
 $layer04 = [double]::Parse($proc04['layer_height'], $inv)
 
 foreach ($d in $nozzles) {
-    $name = "Snapmaker J1 $d BEST PETG Matte"
+    # Orca naming scheme: "<layer height> <quality> @<printer>" (like the system presets,
+    # e.g. "0.12 Fine @Snapmaker J1 (0.4 nozzle)"); layer height = 0.3 * d -> "Fine"
+    $k = [double]::Parse($d, $inv) / 0.4
+    $name = "$(([math]::Round($layer04 * $k, 2)).ToString('0.00', $inv)) Fine @Snapmaker J1 Klipper ($d nozzle)"
     $p = $proc04.Clone()
     $p['name'] = $name
     $p['print_settings_id'] = $name
     if ($d -ne '0.4') {
-        $k = [double]::Parse($d, $inv) / 0.4
         $p['inherits'] = $procParent[$d]
         $p['layer_height'] = Fmt ($layer04 * $k)
         foreach ($w in $widths04.Keys) { $p[$w] = Fmt ($widths04[$w] * $k) }

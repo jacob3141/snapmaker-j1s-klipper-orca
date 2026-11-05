@@ -8,7 +8,7 @@
 	"internal_solid_infill_line_width": "0.45",
 	"internal_solid_infill_speed": "120",
 	"layer_height": "0.12",
-	"name": "Snapmaker J1 0.4 BEST PETG Matte",
+	"name": "0.12 Fine @Snapmaker J1 Klipper (0.4 nozzle)",
 	"outer_wall_line_width": "0.4",
 	"outer_wall_speed": "60",
 	"precise_z_height": "1",
@@ -18,7 +18,7 @@
 	"print_extruder_variant": [
 		"Direct Drive Standard"
 	],
-	"print_settings_id": "Snapmaker J1 0.4 BEST PETG Matte",
+	"print_settings_id": "0.12 Fine @Snapmaker J1 Klipper (0.4 nozzle)",
 	"resolution": "0.008",
 	"seam_position": "aligned_back",
 	"skirt_loops": "4",

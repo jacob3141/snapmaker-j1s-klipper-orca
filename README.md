@@ -1,8 +1,12 @@
 # Snapmaker J1 / J1s – Klipper presets for OrcaSlicer
 
+> **Based on the official Snapmaker J1 presets that ship with OrcaSlicer.** Those presets
+> target the stock **Marlin** firmware (`gcode_flavor: marlin2`). This repository builds on
+> them and optimizes them for **Klipper**.
+
 OrcaSlicer printer and process presets for a Snapmaker J1/J1s IDEX printer running
-**Klipper** (KlipperSnapmakerJ1 with its
-Snapmaker compatibility macros `snapmaker-j1-macros.cfg`), for 0.2 / 0.4 / 0.6 / 0.8 mm nozzles.
+**Klipper** (KlipperSnapmakerJ1 with its Snapmaker compatibility macros
+`snapmaker-j1-macros.cfg`), for 0.2 / 0.4 / 0.6 / 0.8 mm nozzles.
 
 ## Install
 
@@ -14,7 +18,8 @@ skipped silently during import. If presets are missing after the import, add the
 1. Download [`dist/Snapmaker-J1-Klipper.orca_printer`](dist/Snapmaker-J1-Klipper.orca_printer).
 2. In OrcaSlicer, choose **File → Import → Import Configs…** and select the file.
 3. Select the printer **Snapmaker J1 Klipper (0.x nozzle)** that matches your nozzle.
-4. Select the process **Snapmaker J1 0.x BEST PETG Matte**.
+4. Select the process **0.xx Fine @Snapmaker J1 Klipper (0.x nozzle)**. It is listed
+   under *User presets*.
 5. Set your printer's address (Moonraker) at the Wi-Fi/connection icon next to the printer.
    The presets contain no host.
 
@@ -24,7 +29,48 @@ OrcaSlicer updates it and asks before it overwrites a preset. It does not create
 You can also import the single presets from [`profiles/`](profiles) with the same dialog.
 Import the printer before its process.
 
-## What the start G-code does
+> **Upgrading from v1.0.0:** the process presets were renamed from
+> `Snapmaker J1 0.x BEST PETG Matte` to the OrcaSlicer naming scheme (see below). The old
+> presets stay after the import. Delete them in OrcaSlicer if you no longer need them.
+
+## How the presets fit together
+
+OrcaSlicer combines three kinds of presets for every print:
+
+| Kind | Decides | In this repository |
+|---|---|---|
+| **Printer** | machine, nozzle size, firmware flavor, start/end G-code | one per nozzle size |
+| **Filament** | temperatures, flow, cooling, max. volumetric speed | none – use OrcaSlicer's Snapmaker/Generic filaments or your own |
+| **Process** | layer height, line widths, speeds, walls, infill, seam, support | one per nozzle size |
+
+A preset stores only its differences from the preset it `inherits`. All presets here
+inherit from the Snapmaker J1 system presets. Everything they do not change comes from
+there: bed shape, retraction, the toolchange and end G-code, and so on.
+
+OrcaSlicer lists only the process presets that are compatible with the selected printer.
+This repository's presets inherit their compatibility from their parents. With a
+*0.4 nozzle* printer selected, you therefore see only the 0.4 process presets: the
+system ones under *System presets* and these under *User presets*.
+
+### Printer presets – `Snapmaker J1 Klipper (0.x nozzle)`
+
+Each preset inherits from `Snapmaker J1 (0.x nozzle)` with the same nozzle size. It
+differs from that preset only in these settings:
+
+| Setting | Snapmaker J1 (Marlin) | Snapmaker J1 Klipper | Why |
+|---|---|---|---|
+| G-code flavor | `marlin2` | `klipper` | Klipper |
+| Emit machine limits to G-code | yes | no | Klipper's limits come from `printer.cfg`. Here the values below are used only for OrcaSlicer's time estimate. |
+| Max. acceleration X / Y / extruding / travel | 10000 / 8000 / 10000 / 10000 | 8000 / 5000 / 8000 / 8000 | closer to what the Klipper configuration allows |
+| Max. speed X / Y | 350 / 300 | 200 / 200 | same reason |
+| Max. jerk X / Y | 10 | 5 | sent as `M205 V` → Klipper `square_corner_velocity` |
+| Thumbnails | 300×300 | 48×48 + 300×300 PNG | small preview for Mainsail/Fluidd/KlipperScreen file lists |
+| Start G-code | Snapmaker original | rewritten (see below) | |
+
+The end G-code and the toolchange G-code are inherited **unchanged**. Their commands
+(`M104`, `M605`, `T0`/`T1`, …) are handled by the Snapmaker compatibility macros.
+
+### What the start G-code does
 
 [`src/start_gcode.gcode`](src/start_gcode.gcode):
 
@@ -38,19 +84,51 @@ Import the printer before its process.
 
 The start G-code is based on [macdylan/3dp-configs](https://github.com/macdylan/3dp-configs).
 
-## Process presets
+### Process presets – `0.xx Fine @Snapmaker J1 Klipper (0.x nozzle)`
 
-`Snapmaker J1 0.4 BEST PETG Matte` is tuned by hand:
+**Naming.** The names follow OrcaSlicer's scheme `<layer height> <quality> @<printer>`,
+like the system preset `0.12 Fine @Snapmaker J1 (0.4 nozzle)`:
 
-- 0.12 mm layers, gyroid infill, seam aligned at the back
-- 120 mm/s, outer wall 60 mm/s
-- 4 skirt loops, no brim, supports on, precise Z height
+- *Fine* means a layer height of 0.3 × nozzle diameter.
+- The `@…` suffix keeps the names unique across nozzle sizes and shows which printer a
+  preset belongs to.
+- The names contain no material, because a process preset holds nothing
+  material-specific. Temperatures, flow, cooling and volumetric speed belong to the
+  filament preset.
 
-The 0.2 / 0.6 / 0.8 versions are derived from it by `build.ps1`:
+**The 0.4 preset is tuned by hand.** It inherits from `0.16 Optimal @Snapmaker J1 (0.4 nozzle)`
+and changes the following:
 
-- layer height and all line widths scale with `d / 0.4`
-- top shell thickness scales the same way
-- all other settings stay the same
+| Setting | Value |
+|---|---|
+| Layer height | 0.12 mm |
+| Line widths | outer wall 0.40, inner solid infill 0.45, top surface 0.38, support 0.40 |
+| Speeds | inner wall / sparse / solid infill / gap fill 120 mm/s, outer wall 60 mm/s |
+| Seam | aligned, back |
+| Sparse infill | gyroid |
+| Skirt / brim | 4 skirt loops, no brim |
+| Support | on, interface with filament 1 |
+| Precise Z height | on |
+| Resolution | 0.008 mm |
+
+**The 0.2 / 0.6 / 0.8 presets are derived from it** by `build.ps1`. Each inherits from the
+system preset of its nozzle size, and on top of that:
+
+- Layer height, all line widths and the top shell thickness scale with `d / 0.4`.
+- The values the 0.4 preset gets from *0.16 Optimal* are copied, because the other system
+  parents do not set them (they would fall back to Orca's generic defaults): 3 walls, 5 top / 4 bottom layers, elephant foot 0.15,
+  bridge flow 1, support threshold 25°, first-layer infill 80 mm/s.
+- Everything else is the same as in the 0.4 preset.
+
+| Preset | Parent | Layer | Outer wall | Inner wall / solid | Top surface | First layer | Top shell |
+|---|---|---|---|---|---|---|---|
+| 0.06 Fine (0.2) | 0.06 Standard | 0.06 | 0.20 | 0.225 | 0.19 | 0.25 | 0.3 mm |
+| 0.12 Fine (0.4) | 0.16 Optimal | 0.12 | 0.40 | 0.45 | 0.38 | 0.50 | 0.6 mm |
+| 0.18 Fine (0.6) | 0.18 Standard | 0.18 | 0.60 | 0.675 | 0.57 | 0.75 | 0.9 mm |
+| 0.24 Fine (0.8) | 0.24 Standard | 0.24 | 0.80 | 0.90 | 0.76 | 1.00 | 1.2 mm |
+
+The speeds are the same for every size. With 0.6 and 0.8 nozzles, the filament's maximum
+volumetric speed usually limits them first.
 
 ## Repository layout
 
