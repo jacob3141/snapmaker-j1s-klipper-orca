@@ -141,11 +141,11 @@ OrcaFilamentLibrary, available on every installation) and changes:
 
 | Setting | Value | Why |
 |---|---|---|
-| Nozzle temperature | 245 °C first layer, then 235 °C | good adhesion; less stringing and oozing afterwards |
-| Part cooling fan | off on layer 1, 20–40 %, full from layer 4; overhangs 80 % | enough cooling for small details and top surfaces without weakening layer adhesion |
+| Nozzle temperature | 245 °C first layer, then 230 °C | good adhesion; less stringing and oozing afterwards |
+| Part cooling fan | off on layer 1, 20 % on normal layers, up to 60 % on short layers (small features), full from layer 4; overhangs 80 % | cools small details and top surfaces without weakening layer adhesion on larger parts |
 | Flow ratio | 1.00 | no over-extrusion on top surfaces |
 | Max. volumetric speed | 8 mm³/s | conservative limit for matte PETG |
-| Retraction | 1.0 mm | less stringing between small features |
+| Retraction | 1.2 mm at 35 mm/s | less stringing between small features (Klipper allows up to 40 mm/s) |
 | Pressure advance | 0.062 | calibrated for the 0.4 nozzle |
 | Shrinkage XY / Z | 99.5 % | compensates PETG shrinkage |
 | Air filtration / exhaust fan | on, 10 % | |

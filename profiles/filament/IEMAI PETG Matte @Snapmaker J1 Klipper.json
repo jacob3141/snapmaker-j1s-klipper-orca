@@ -12,7 +12,7 @@
 		"10"
 	],
 	"fan_max_speed": [
-		"40"
+		"60"
 	],
 	"fan_min_speed": [
 		"20"
@@ -30,7 +30,10 @@
 		"8"
 	],
 	"filament_retraction_length": [
-		"1"
+		"1.2"
+	],
+	"filament_retraction_speed": [
+		"35"
 	],
 	"filament_settings_id": [
 		"IEMAI PETG Matte @Snapmaker J1 Klipper"
@@ -51,7 +54,7 @@
 	"inherits": "Elegoo PETG @System",
 	"name": "IEMAI PETG Matte @Snapmaker J1 Klipper",
 	"nozzle_temperature": [
-		"235"
+		"230"
 	],
 	"nozzle_temperature_initial_layer": [
 		"245"

@@ -70,6 +70,8 @@ G92 Z0 ;reset z
 ;   Y83 -> Y15 fat line (width 2*d), step 1.75*d toward the bed,
 ;   Y15 -> Y95 return line (width 1.25*d), then fast Y move to Y195
 ;   -> the strand tears off in the dead zone.
+;   The retraction before the tear-off is undone afterwards: OrcaSlicer assumes an
+;   unretracted nozzle and retracts/unretracts itself around its first travel.
 ; Klipper limits extrusion to 4 x 0.4^2 = 0.64 mm^2 cross section (nozzle_diameter
 ; of printer.cfg): all moves are capped at 0.60 / 0.55 mm^2 (matters for 0.8 nozzles).
 ;   d=0.4: ramp E3 (0.60 mm^2), fat E6.8 (0.24 mm^2), return E5.0 (0.15 mm^2)
@@ -103,6 +105,7 @@ M204 S3000
 G0 Y195 F12000           ; fast Y move tears off the strands
 M204 S100
 G0 Z2 F240.0
+G1 E{retraction_length[initial_extruder]} F1800 ; undo the retraction: OrcaSlicer expects an unretracted nozzle
 G92 E0
 ; back to full control (as _SNAPMAKER_RESET_MODE) and park both carriages
 SYNC_EXTRUDER_MOTION EXTRUDER=extruder1 MOTION_QUEUE=extruder1
@@ -133,6 +136,7 @@ M204 S3000
 G0 Y195 F12000           ; fast Y move tears off the strand
 M204 S100
 G0 Z2 F240.0
+G1 E{retract_length_toolchange[0]} F1800 ; undo the retraction: OrcaSlicer expects an unretracted nozzle
 G92 E0
 M104 T0 S{temperature_vitrification[0]}
 {endif}
@@ -154,6 +158,7 @@ M204 S3000
 G0 Y195 F12000           ; fast Y move tears off the strand
 M204 S100
 G0 Z2 F240.0
+G1 E{retract_length_toolchange[1]} F1800 ; undo the retraction: OrcaSlicer expects an unretracted nozzle
 G92 E0
 M104 T1 S{temperature_vitrification[1]}
 {endif}
@@ -178,6 +183,7 @@ M204 S3000
 G0 Y195 F12000           ; fast Y move tears off the strand
 M204 S100
 G0 Z2 F240.0
+G1 E{retraction_length[initial_extruder]} F1800 ; undo the retraction: OrcaSlicer expects an unretracted nozzle
 G92 E0
 {endif}
 
