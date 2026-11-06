@@ -80,7 +80,9 @@ The end G-code and the toolchange G-code are inherited **unchanged**. Their comm
 - **No purge blobs and no cleaning preheat.** These only make the nozzle ooze.
 - **Bed heating:** the print continues as soon as the bed reaches its minimum temperature. It does not wait for the temperature to settle.
 - **Nozzle sealing:** each nozzle moves **cold** to the start of its prime line and is lowered to Z0, which seals it. Then it heats. Priming starts as soon as the minimum temperature is reached.
-- **Prime line position:** prime lines run along Y in the X zones only one head can reach: T0 at X5, T1 at X319, symmetric around the bed centre X162. Each nozzle draws a fat line, steps over and draws a return line. A fast 100 mm Y move then tears off the strand.
+- **Prime line position:** prime lines run along Y in the X zones only one head can reach: T0 at X5, T1 at X319, symmetric around the bed centre X162. Each nozzle draws a fat line, steps over and draws a return line.
+- **Cool down and tear off:** the nozzle stays at the end of the prime line. The heater is off and the part cooling fan runs at 100 % until the nozzle reaches 160 °C. A fast 20 mm Y move then tears off the cooled strand.
+- **Print start:** the initial nozzle moves to the front left corner of the first layer (skirt included), is lowered to Z0 and heats up there, sealed. The print starts as soon as the nozzle is 5 °C below its target temperature. It does not wait for the temperature to settle.
 - **Both nozzles used:** with both nozzles in use (and not an IDEX duplication/mirror plate), both nozzles prime **at the same time** in Klipper `dual_carriage` MIRROR mode.
 - **Scaling with the nozzle:** prime line height, width and amount scale with the nozzle diameter. They are capped at Klipper's `max_extrude_cross_section` (the default `4 × 0.4²` from `printer.cfg`).
 - **IDEX modes:** plate names containing `IDEXDupl`/`IDEXCopy`, `IDEXMirr` or `IDEXBack` switch the IDEX mode with `M605`, as in the original Snapmaker profiles.
