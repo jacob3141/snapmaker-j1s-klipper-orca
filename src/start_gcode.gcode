@@ -3,7 +3,7 @@
 ; Modified: no cleaning preheat, no purge blobs;
 ;           cold nozzles are lowered to Z0 at the start of their prime line (sealed),
 ;           then heated - priming starts as soon as the minimum temperature is reached;
-;           after priming the nozzle stays on the line end and cools to 160C (fans full),
+;           after priming the nozzle stays on the line end and cools to 200C (fans full),
 ;           tears off with a short jerk, is sealed again at the print start and reheats there;
 ;           the print starts 5C below the target temperature;
 ;           prime lines along Y in the exclusive X zones (T0 X5 / T1 X319, symmetric around X162);
@@ -72,13 +72,13 @@ G92 Z0 ;reset z
 ;   Y95 -> Y83 ramp up to Z 0.75*d while refilling,
 ;   Y83 -> Y15 fat line (width 2*d), step 1.75*d toward the bed,
 ;   Y15 -> Y95 return line (width 1.25*d),
-;   stay at the line end: heater off, part fan 100 % until the nozzle is at 160C,
+;   stay at the line end: heater off, part fan 100 % until the nozzle is at 200C,
 ;   then a fast 20 mm Y move to Y115 -> the cooled strand tears off without oozing.
-;   No E moves after the line: Klipper refuses to extrude below min_extrude_temp (170C)
-;   and OrcaSlicer assumes an unretracted nozzle anyway.
+;   No E moves after the line: OrcaSlicer assumes an unretracted nozzle.
 ; Print start (end of this file): the initial nozzle moves to the front left corner of the
 ; first layer (skirt included), is lowered to Z0 (sealed) and heats up there. As soon as it
-; is 5C below the target it lifts to the first layer height and OrcaSlicer takes over.
+; is 5C below the target OrcaSlicer takes over. The nozzle stays on Z0 until the first layer change:
+; before_layer_change_gcode of the printer preset lifts it, right before the first travel.
 ; Klipper limits extrusion to 4 x 0.4^2 = 0.64 mm^2 cross section (nozzle_diameter
 ; of printer.cfg): all moves are capped at 0.60 / 0.55 mm^2 (matters for 0.8 nozzles).
 ;   d=0.4: ramp E3 (0.60 mm^2), fat E6.8 (0.24 mm^2), return E5.0 (0.15 mm^2)
@@ -107,14 +107,14 @@ G1 Y83 Z{0.75*nozzle_diameter[0]} E{min(3, 18.75*nozzle_diameter[0]*nozzle_diame
 G1 Y15 E{min(15.5, 42.41*nozzle_diameter[0]*nozzle_diameter[0])} F{(nozzle_diameter[0] > 0.5 ? 1200 : 1800)}   ; fat line
 G1 X{5 + 1.75*nozzle_diameter[0]} F1800                                                     ; T1 mirrors to X319 - step
 G1 Y95 E{min(18.3, 31.19*nozzle_diameter[0]*nozzle_diameter[0])} F{(nozzle_diameter[0] > 0.5 ? 2000 : 3000)}  ; return line
-; stay on the line end: fans full until both nozzles are at 160C
+; stay on the line end: fans full until both nozzles are at 200C
 ; (the mode is not known to the macros here, so address both nozzles and fans explicitly)
 M104 T0 S0
 M104 T1 S0
 M106 P0 S255
 M106 P1 S255
-TEMPERATURE_WAIT SENSOR=extruder MAXIMUM=160
-TEMPERATURE_WAIT SENSOR=extruder1 MAXIMUM=160
+TEMPERATURE_WAIT SENSOR=extruder MAXIMUM=200
+TEMPERATURE_WAIT SENSOR=extruder1 MAXIMUM=200
 M107 P0
 M107 P1
 M204 S3000
@@ -146,10 +146,10 @@ G1 Y83 Z{0.75*nozzle_diameter[0]} E{min(3, 18.75*nozzle_diameter[0]*nozzle_diame
 G1 Y15 E{min(15.5, 42.41*nozzle_diameter[0]*nozzle_diameter[0])} F{(nozzle_diameter[0] > 0.5 ? 1200 : 1800)}   ; fat line
 G1 X{5 + 1.75*nozzle_diameter[0]} F1800
 G1 Y95 E{min(18.3, 31.19*nozzle_diameter[0]*nozzle_diameter[0])} F{(nozzle_diameter[0] > 0.5 ? 2000 : 3000)}  ; return line
-; stay on the line end: fan full until the nozzle is at 160C
+; stay on the line end: fan full until the nozzle is at 200C
 M104 T0 S0
 M106 S255
-TEMPERATURE_WAIT SENSOR=extruder MAXIMUM=160
+TEMPERATURE_WAIT SENSOR=extruder MAXIMUM=200
 M107
 M204 S3000
 G0 Y115 F12000           ; fast 20 mm Y move tears off the strand
@@ -171,10 +171,10 @@ G1 Y83 Z{0.75*nozzle_diameter[1]} E{min(3, 18.75*nozzle_diameter[1]*nozzle_diame
 G1 Y15 E{min(15.5, 42.41*nozzle_diameter[1]*nozzle_diameter[1])} F{(nozzle_diameter[1] > 0.5 ? 1200 : 1800)}   ; fat line
 G1 X{319 - 1.75*nozzle_diameter[1]} F1800
 G1 Y95 E{min(18.3, 31.19*nozzle_diameter[1]*nozzle_diameter[1])} F{(nozzle_diameter[1] > 0.5 ? 2000 : 3000)}  ; return line
-; stay on the line end: fan full until the nozzle is at 160C
+; stay on the line end: fan full until the nozzle is at 200C
 M104 T1 S0
 M106 S255
-TEMPERATURE_WAIT SENSOR=extruder1 MAXIMUM=160
+TEMPERATURE_WAIT SENSOR=extruder1 MAXIMUM=200
 M107
 M204 S3000
 G0 Y115 F12000           ; fast 20 mm Y move tears off the strand
@@ -199,13 +199,13 @@ G1 Y83 Z{0.75*nozzle_diameter[initial_extruder]} E{min(3, 18.75*nozzle_diameter[
 G1 Y15 E{min(15.5, 42.41*nozzle_diameter[initial_extruder]*nozzle_diameter[initial_extruder])} F{(nozzle_diameter[initial_extruder] > 0.5 ? 1200 : 1800)}   ; fat line
 G1 X{(initial_extruder == 0 ? 5 + 1.75*nozzle_diameter[initial_extruder] : 319 - 1.75*nozzle_diameter[initial_extruder])} F1800
 G1 Y95 E{min(18.3, 31.19*nozzle_diameter[initial_extruder]*nozzle_diameter[initial_extruder])} F{(nozzle_diameter[initial_extruder] > 0.5 ? 2000 : 3000)}  ; return line
-; stay on the line end: fan full until the nozzle is at 160C
+; stay on the line end: fan full until the nozzle is at 200C
 ; (IDEX duplication/mirror plates: the M104/M106 macros switch both nozzles and fans)
 M104 S0
 M106 S255
-TEMPERATURE_WAIT SENSOR=extruder{if initial_extruder == 1}1{endif} MAXIMUM=160
+TEMPERATURE_WAIT SENSOR=extruder{if initial_extruder == 1}1{endif} MAXIMUM=200
 {if plate_name =~/.*IDEXDupl.*/ || plate_name =~/.*IDEXCopy.*/ || plate_name =~/.*IDEXMirr.*/}
-TEMPERATURE_WAIT SENSOR=extruder1 MAXIMUM=160
+TEMPERATURE_WAIT SENSOR=extruder1 MAXIMUM=200
 {endif}
 M107
 M204 S3000
@@ -227,7 +227,5 @@ TEMPERATURE_WAIT SENSOR=extruder{if initial_extruder == 1}1{endif} MINIMUM={nozz
 {if plate_name =~/.*IDEXDupl.*/ || plate_name =~/.*IDEXCopy.*/ || plate_name =~/.*IDEXMirr.*/}
 TEMPERATURE_WAIT SENSOR=extruder1 MINIMUM={nozzle_temperature_initial_layer[initial_extruder] - 5}
 {endif}
-; OrcaSlicer travels first and sets Z afterwards: lift off, or the nozzle scrapes over the bed
-G0 Z{initial_layer_print_height} F600
 
 ; ready [plate_name]
