@@ -1,7 +1,7 @@
 {
 	"id": "snapmaker-j1-klipper-orca",
 	"name": "Snapmaker J1 Klipper",
-	"version": "1.4.2",
+	"version": "1.4.3",
 	"author": "Jacob Dawid",
 	"description": "OrcaSlicer printer, process and filament presets for the Snapmaker J1/J1s running Klipper (KlipperSnapmakerJ1), 0.2/0.4/0.6/0.8 nozzles"
 }

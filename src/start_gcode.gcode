@@ -75,10 +75,9 @@ G92 Z0 ;reset z
 ;   stay at the line end: heater off, part fan 100 % until the nozzle is at 200C,
 ;   then a fast 20 mm Y move to Y115 -> the cooled strand tears off without oozing.
 ;   No E moves after the line: OrcaSlicer assumes an unretracted nozzle.
-; Print start (end of this file): the initial nozzle moves to the front left corner of the
-; first layer (skirt included), is lowered to Z0 (sealed) and heats up there. As soon as it
-; is 5C below the target OrcaSlicer takes over. The nozzle stays on Z0 until the first layer change:
-; before_layer_change_gcode of the printer preset lifts it, right before the first travel.
+; Print start: OrcaSlicer travels to the first point of the print. There, right before the first
+; extrusion, change_extrusion_role_gcode of the printer preset lowers the nozzle to Z0 (sealed),
+; heats it and starts the print 5C below the target. See the end of this file for the exceptions.
 ; Klipper limits extrusion to 4 x 0.4^2 = 0.64 mm^2 cross section (nozzle_diameter
 ; of printer.cfg): all moves are capped at 0.60 / 0.55 mm^2 (matters for 0.8 nozzles).
 ;   d=0.4: ramp E3 (0.60 mm^2), fat E6.8 (0.24 mm^2), return E5.0 (0.15 mm^2)
@@ -216,16 +215,22 @@ G92 E0
 {endif}
 
 ; ===== print start =====
-; Seal the initial nozzle at the front left corner of the first layer and heat it there.
-; X limits: the reach of each head while the other one is parked (see above).
-G0 Z5 F600
-G0 X{(initial_extruder == 0 ? min(first_layer_print_min[0], 314) : max(first_layer_print_min[0], 11))} Y{first_layer_print_min[1]} F6840.0
+{if has_wipe_tower or (ooze_prevention and standby_temperature_delta != 0 and (initial_extruder == 1 or is_extruder_used[1]))}
+; OrcaSlicer needs the nozzle hot before its first travel (prime tower, or the waiting M109
+; of the ooze prevention in system process presets): heat up sealed beside the prime line.
+G0 Z2 F600
+G0 X{(initial_extruder == 0 ? 5 : 319)} Y125 F6840.0
 G0 Z0 F240.0                                 ; nozzle sealed on the bed
 M104 S{nozzle_temperature_initial_layer[initial_extruder]}
-; no settling: the print starts 5C below the target, the heater keeps going
 TEMPERATURE_WAIT SENSOR=extruder{if initial_extruder == 1}1{endif} MINIMUM={nozzle_temperature_initial_layer[initial_extruder] - 5}
 {if plate_name =~/.*IDEXDupl.*/ || plate_name =~/.*IDEXCopy.*/ || plate_name =~/.*IDEXMirr.*/}
 TEMPERATURE_WAIT SENSOR=extruder1 MINIMUM={nozzle_temperature_initial_layer[initial_extruder] - 5}
+{endif}
+{else}
+; Stay warm enough for OrcaSlicer's retract and unretract around its first travel
+; (Klipper refuses E moves below min_extrude_temp, 170C). change_extrusion_role_gcode of the
+; printer preset seals the nozzle on the exact start point and heats it there.
+M104 S180
 {endif}
 
 ; ready [plate_name]

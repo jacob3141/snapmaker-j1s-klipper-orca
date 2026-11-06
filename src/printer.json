@@ -1,5 +1,6 @@
 {
-	"before_layer_change_gcode": "; layer_num: [layer_num]\nG92 E0\n; first layer only (not for later objects when printing by object):\n; the start G-code leaves the nozzle sealed on Z0, lift it before the first travel\n{if layer_num == 0 && max_layer_z < layer_z + 0.01}\nG0 Z{layer_z} F600\n{endif}",
+	"before_layer_change_gcode": "; layer_num: [layer_num]\nG92 E0\n; first layer only (not for later objects when printing by object):\n; travel high enough, the start G-code may have left the nozzle sealed on Z0\n{if layer_num == 0 && max_layer_z < layer_z + 0.01}\nM107\nG0 Z2 F600\n{endif}",
+	"change_extrusion_role_gcode": "{if last_extrusion_role == \"Mixed\" && layer_num <= 1}\n; first extrusion of the print, the nozzle is on the exact start point: seal it on the bed, heat it, start 5C below the target\nG0 Z0 F240\nM104 S{nozzle_temperature_initial_layer[current_extruder]}\nTEMPERATURE_WAIT SENSOR=extruder{if current_extruder == 1}1{endif} MINIMUM={nozzle_temperature_initial_layer[current_extruder] - 5}\n{if plate_name =~/.*IDEXDupl.*/ || plate_name =~/.*IDEXCopy.*/ || plate_name =~/.*IDEXMirr.*/}\nTEMPERATURE_WAIT SENSOR=extruder1 MINIMUM={nozzle_temperature_initial_layer[current_extruder] - 5}\n{endif}\nG0 Z{layer_z} F600\n{endif}",
 	"emit_machine_limits_to_gcode": "0",
 	"gcode_flavor": "klipper",
 	"machine_max_acceleration_extruding": ["8000", "8000", "8000", "8000"],

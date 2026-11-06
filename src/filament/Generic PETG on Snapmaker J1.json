@@ -36,7 +36,7 @@
 		"25"
 	],
 	"filament_settings_id": [
-		"IEMAI PETG Matte @Snapmaker J1 Klipper"
+		"Generic PETG on Snapmaker J1"
 	],
 	"filament_shrink": [
 		"99.5%"
@@ -45,7 +45,7 @@
 		"99.5%"
 	],
 	"filament_vendor": [
-		"IEMAI"
+		"Generic"
 	],
 	"filament_z_hop": [
 		"0"
@@ -55,7 +55,7 @@
 		"4"
 	],
 	"inherits": "Elegoo PETG @System",
-	"name": "IEMAI PETG Matte @Snapmaker J1 Klipper",
+	"name": "Generic PETG on Snapmaker J1",
 	"nozzle_temperature": [
 		"240"
 	],

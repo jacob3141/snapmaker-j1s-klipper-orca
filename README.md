@@ -20,8 +20,7 @@ skipped silently during import. If presets are missing after the import, add the
 3. Select the printer **Snapmaker J1 Klipper (0.x nozzle)** that matches your nozzle.
 4. Select a process **0.xx … @Snapmaker J1 Klipper (0.x nozzle)**, for example
    `0.12 Fine`. They are listed under *User presets*.
-5. Optional: select the filament **IEMAI PETG Matte @Snapmaker J1 Klipper**, or use it as a
-   starting point for other matte PETGs.
+5. Optional: select the filament **Generic PETG on Snapmaker J1**.
 6. Set your printer's address (Moonraker) at the Wi-Fi/connection icon next to the printer.
    The presets contain no host.
 
@@ -34,6 +33,10 @@ Import the printer first.
 > **Upgrading from v1.0.0:** the process presets were renamed from
 > `Snapmaker J1 0.x BEST PETG Matte` to the OrcaSlicer naming scheme (see below). The old
 > presets stay after the import. Delete them in OrcaSlicer if you no longer need them.
+>
+> **Upgrading from v1.4.2 or older:** the filament preset `IEMAI PETG Matte @Snapmaker J1 Klipper` is now
+> `Generic PETG on Snapmaker J1`. The old preset stays after the import. Delete it in OrcaSlicer if you no
+> longer need it.
 
 ## How the presets fit together
 
@@ -92,7 +95,7 @@ which also waits with `M109` when the first tool is selected and so delays the p
 - **Nozzle sealing:** each nozzle moves **cold** to the start of its prime line and is lowered to Z0, which seals it. Then it heats. Priming starts as soon as the minimum temperature is reached.
 - **Prime line position:** prime lines run along Y in the X zones only one head can reach: T0 at X5, T1 at X319, symmetric around the bed centre X162. Each nozzle draws a fat line, steps over and draws a return line.
 - **Cool down and tear off:** the nozzle stays at the end of the prime line. The heater is off and the part cooling fan runs at 100 % until the nozzle reaches 200 °C. A fast 20 mm Y move then tears off the cooled strand.
-- **Print start:** the initial nozzle moves to the front left corner of the first layer (skirt included), is lowered to Z0 and heats up there, sealed. The print starts as soon as the nozzle is 5 °C below its target temperature. It does not wait for the temperature to settle. With a system process preset and T1, OrcaSlicer still adds a waiting `M109` here; the nozzle waits sealed on Z0 and lifts only right before the first travel.
+- **Print start:** after the tear-off the nozzle holds 180 °C, so OrcaSlicer can retract and unretract around its first travel. On the exact first point of the print, right before the first extrusion, it is lowered to Z0 and heats up there, sealed. The print starts as soon as the nozzle is 5 °C below its target temperature. It does not wait for the temperature to settle. **Exception:** with a prime tower, or with a system process preset and T1, OrcaSlicer needs the nozzle hot before its first travel. It then heats up sealed beside the prime line, waits for `M109` with the part cooling fan at 100 % to damp the overshoot, and only touches down briefly on the start point.
 - **Both nozzles used:** with both nozzles in use (and not an IDEX duplication/mirror plate), both nozzles prime **at the same time** in Klipper `dual_carriage` MIRROR mode.
 - **Scaling with the nozzle:** prime line height, width and amount scale with the nozzle diameter. They are capped at Klipper's `max_extrude_cross_section` (the default `4 × 0.4²` from `printer.cfg`).
 - **IDEX modes:** plate names containing `IDEXDupl`/`IDEXCopy`, `IDEXMirr` or `IDEXBack` switch the IDEX mode with `M605`, as in the original Snapmaker profiles.
@@ -159,10 +162,11 @@ parts tore at retractions. Prefer 0.12 mm or higher for this material.
 The speeds are the same for every size. With larger nozzles and layer heights, the filament's
 maximum volumetric speed usually limits them first.
 
-### Filament preset – `IEMAI PETG Matte @Snapmaker J1 Klipper`
+### Filament preset – `Generic PETG on Snapmaker J1`
 
-Tuned for IEMAI matte PETG with a **0.4 mm brass nozzle**, together with the
-`0.12 Fine` process. It inherits from OrcaSlicer's `Elegoo PETG @System` (in the
+A general PETG preset. It was tuned with IEMAI matte PETG, a **0.4 mm brass nozzle** and the
+`0.12 Fine` process, and test prints also came out well with GEEETECH, Creality and Elegoo PETG.
+It inherits from OrcaSlicer's `Elegoo PETG @System` (in the
 OrcaFilamentLibrary, available on every installation) and changes:
 
 | Setting | Value | Why |
@@ -185,8 +189,8 @@ Notes:
 - **Nozzle material:** these values are for **brass**. Hardened steel conducts heat worse;
   add about 5–10 °C. Matte filaments contain matting additives that wear brass over time.
   When stringing increases or the line width becomes uneven, check the nozzle.
-- **Other matte PETGs:** use the preset as a starting point, but calibrate flow ratio and
-  pressure advance for each spool brand.
+- **Other PETGs:** for the best result, calibrate flow ratio and pressure advance for each
+  spool brand.
 
 ## Repository layout
 
