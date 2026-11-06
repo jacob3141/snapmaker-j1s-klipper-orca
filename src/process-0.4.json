@@ -1,4 +1,5 @@
 {
+	"standby_temperature_delta": "0",
 	"brim_type": "no_brim",
 	"enable_arc_fitting": "0",
 	"extra_perimeters_on_overhangs": "1",

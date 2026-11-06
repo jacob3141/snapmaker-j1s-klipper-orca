@@ -7,6 +7,7 @@
     bundle.json        bundle id/name/version/author (bump "version" on every release)
     printer.json       settings shared by all printer presets (on top of the Snapmaker system presets)
     start_gcode.gcode  machine start G-code (nozzle-parametric)
+    change_filament_gcode.gcode  toolchange G-code (Snapmaker original + cooldown of the old nozzle)
     process-0.4.json   the hand-tuned 0.12 mm / 0.4 nozzle process preset; all others are derived from it
     filament/*.json    filament presets, used as is
 
@@ -75,6 +76,7 @@ function Fmt([double]$x) { ([math]::Round($x, 3)).ToString($inv) }
 
 # ---------------------------------------------------------------- printer presets
 $gcode = [IO.File]::ReadAllText((Join-Path $src 'start_gcode.gcode'), $utf8).Replace("`r`n", "`n").TrimEnd("`n")
+$toolchange = [IO.File]::ReadAllText((Join-Path $src 'change_filament_gcode.gcode'), $utf8).Replace("`r`n", "`n").TrimEnd("`n")
 $printerBase = Read-Preset (Join-Path $src 'printer.json')
 
 $presets = [ordered]@{}   # zip path -> json text
@@ -87,6 +89,7 @@ foreach ($d in $nozzles) {
     $p['name'] = $name
     $p['printer_settings_id'] = $name
     $p['machine_start_gcode'] = $gcode
+    $p['change_filament_gcode'] = $toolchange
     $presets["printer/$name.json"] = ConvertTo-PresetJson $p
 }
 

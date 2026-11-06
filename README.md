@@ -70,8 +70,18 @@ differs from that preset only in these settings:
 | Thumbnails | 300×300 | 48×48 + 300×300 PNG | small preview for Mainsail/Fluidd/KlipperScreen file lists |
 | Start G-code | Snapmaker original | rewritten (see below) | |
 
-The end G-code and the toolchange G-code are inherited **unchanged**. Their commands
-(`M104`, `M605`, `T0`/`T1`, …) are handled by the Snapmaker compatibility macros.
+The end G-code is inherited **unchanged**. Its commands (`M104`, `T0`/`T1`, …) are handled
+by the Snapmaker compatibility macros.
+
+The toolchange G-code ([`src/change_filament_gcode.gcode`](src/change_filament_gcode.gcode))
+is the Snapmaker original with two changes. It cools the old nozzle by 70 °C and heats the
+new one to the temperature of the new filament. Printing continues as soon as the new nozzle
+is 5 °C below its target, without waiting for the temperature to settle. OrcaSlicer's preheat
+(`preheat_time`) keeps working: it heats the next nozzle ahead of the toolchange and skips the
+cooldown when a nozzle is needed again soon. The G-code takes over OrcaSlicer's ooze prevention,
+which also waits with `M109` when the first tool is selected and so delays the print start
+(all prints that use T1). The process presets switch this off with
+`standby_temperature_delta = 0`. **System process presets still cause that wait.**
 
 ### What the start G-code does
 
