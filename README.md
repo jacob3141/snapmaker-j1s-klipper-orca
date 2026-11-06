@@ -77,7 +77,7 @@ The end G-code is inherited **unchanged**. Its commands (`M104`, `T0`/`T1`, …)
 by the Snapmaker compatibility macros.
 
 The toolchange G-code ([`src/change_filament_gcode.gcode`](src/change_filament_gcode.gcode))
-is the Snapmaker original with two changes. It cools the old nozzle by 70 °C and heats the
+is the Snapmaker original with two changes. It cools the old nozzle by 70 °C, but never below 180 °C, and heats the
 new one to the temperature of the new filament. Printing continues as soon as the new nozzle
 is 5 °C below its target, without waiting for the temperature to settle. OrcaSlicer's preheat
 (`preheat_time`) keeps working: it heats the next nozzle ahead of the toolchange and skips the
@@ -91,8 +91,8 @@ which also waits with `M109` when the first tool is selected and so delays the p
 [`src/start_gcode.gcode`](src/start_gcode.gcode):
 
 - **No purge blobs and no cleaning preheat.** These only make the nozzle ooze.
-- **Bed heating:** the print continues as soon as the bed reaches its minimum temperature. It does not wait for the temperature to settle.
-- **Nozzle sealing:** each nozzle moves **cold** to the start of its prime line and is lowered to Z0, which seals it. Then it heats. Priming starts as soon as the minimum temperature is reached.
+- **Bed heating:** there is no LED animation. While the bed heats, it moves to Z10 and the nozzles in use preheat to 140 °C. The print continues as soon as the bed reaches its minimum temperature. It does not wait for the temperature to settle, and it does not wait for the 140 °C.
+- **Nozzle sealing:** each nozzle moves to the start of its prime line and is lowered to Z0, which seals it. Then it heats to its target. Priming starts as soon as the minimum temperature is reached.
 - **Prime line position:** prime lines run along Y in the X zones only one head can reach: T0 at X5, T1 at X319, symmetric around the bed centre X162. Each nozzle draws a fat line, steps over and draws a return line.
 - **Cool down and tear off:** the nozzle stays at the end of the prime line. The heater is off and the part cooling fan runs at 100 % until the nozzle reaches 200 °C. A fast 20 mm Y move then tears off the cooled strand.
 - **Print start:** after the tear-off the nozzle holds 180 °C, so OrcaSlicer can retract and unretract around its first travel. On the exact first point of the print, right before the first extrusion, it is lowered to Z0 and heats up there, sealed. The print starts as soon as the nozzle is 5 °C below its target temperature. It does not wait for the temperature to settle. **Exception:** with a prime tower, or with a system process preset and T1, OrcaSlicer needs the nozzle hot before its first travel. It then heats up sealed beside the prime line, waits for `M109` with the part cooling fan at 100 % to damp the overshoot, and only touches down briefly on the start point.

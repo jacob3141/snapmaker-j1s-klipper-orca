@@ -2,7 +2,7 @@
 {if current_extruder != next_extruder}
 ; Change T[current_extruder] -> T[next_extruder] (layer [layer_num] [toolchange_count]/[total_toolchanges])
 ; layer [layer_num] at [layer_z]mm
-M104 T[current_extruder] S{old_filament_temp - 70} ;cooldown
+M104 T[current_extruder] S{min(old_filament_temp, max(old_filament_temp - 70, 180))} ;cooldown, never below 180C
 T[next_extruder]
 
  M107 P[current_extruder] ;fan off T[current_extruder]

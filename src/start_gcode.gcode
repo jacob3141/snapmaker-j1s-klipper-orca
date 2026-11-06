@@ -1,7 +1,7 @@
 ; Model: Snapmaker J1 ({nozzle_diameter[0]}/{nozzle_diameter[1]}) - Klipper (KlipperSnapmakerJ1)
 ; Based on https://github.com/macdylan/3dp-configs (Update 20240922)
 ; Modified: no cleaning preheat, no purge blobs;
-;           cold nozzles are lowered to Z0 at the start of their prime line (sealed),
+;           while the bed heats, the nozzles preheat to 140C with the bed at Z10;
 ;           then heated - priming starts as soon as the minimum temperature is reached;
 ;           after priming the nozzle stays on the line end and cools to 200C (fans full),
 ;           tears off with a short jerk, is sealed again at the print start and reheats there;
@@ -35,27 +35,27 @@ M205 V[machine_max_jerk_x] ;square corner velocity (macro -> SET_VELOCITY_LIMIT)
   M605 S4 ;IDEX Backup
 {endif}
 
-; nozzles stay cold until they sit sealed on the bed
+; nozzles stay off while homing
 M104 T0 S0
 M104 T1 S0
 M140 S{first_layer_bed_temperature[initial_extruder]}
+M355 S1 P255 ; light on (macro -> case_light)
 M204 S100
 G28
+
+; while the bed heats: bed at Z10, nozzles in use preheat to 140C (no wait for them)
+G0 Z10 F600
+{if is_extruder_used[0]}
+M104 T0 S140
+{endif}
+{if is_extruder_used[1]}
+M104 T1 S140
+{endif}
 
 ; bed: continue as soon as the minimum is reached (no settling)
 ; (the M140 macro caps the bed at 100C)
 TEMPERATURE_WAIT SENSOR=heater_bed MINIMUM={min(first_layer_bed_temperature[initial_extruder], 100) - 2}
 
-{if 1==1}; LED (macro -> case_light)
-  M355 S1 P64
-  G4 P100
-  M355 S1 P128
-  G4 P100
-  M355 S1 P64
-  G4 P200
-  M355 S1 P255
-  G4 P100
-{endif}
 G28 X Y
 
 {if 1==1 && max(hot_plate_temp_initial_layer[initial_extruder], hot_plate_temp[initial_extruder]) >= 90}
@@ -68,7 +68,7 @@ G92 Z0 ;reset z
 ; (safe_distance 24: T1 >= X11 while T0 is parked at X-13,
 ;  T0 <= X314 while T1 is parked at X338):
 ;   T0: X5, T1: X319
-;   cold nozzle down to Z0 at X/Y95 (sealed), heat, wait for the minimum temperature,
+;   preheated nozzle down to Z0 at X/Y95 (sealed), heat, wait for the minimum temperature,
 ;   Y95 -> Y83 ramp up to Z 0.75*d while refilling,
 ;   Y83 -> Y15 fat line (width 2*d), step 1.75*d toward the bed,
 ;   Y15 -> Y95 return line (width 1.25*d),
@@ -97,7 +97,7 @@ SET_DUAL_CARRIAGE CARRIAGE=0
 SET_DUAL_CARRIAGE CARRIAGE=1 MODE=MIRROR
 ACTIVATE_EXTRUDER EXTRUDER=extruder
 SYNC_EXTRUDER_MOTION EXTRUDER=extruder1 MOTION_QUEUE=extruder
-G0 Z0 F240.0                                 ; cold nozzles sealed on the bed
+G0 Z0 F240.0                                 ; nozzles sealed on the bed
 M104 T0 S{nozzle_temperature_initial_layer[0]}
 M104 T1 S{nozzle_temperature_initial_layer[1]}
 TEMPERATURE_WAIT SENSOR=extruder MINIMUM={nozzle_temperature_initial_layer[0] - 2}
@@ -126,19 +126,19 @@ SYNC_EXTRUDER_MOTION EXTRUDER=extruder1 MOTION_QUEUE=extruder1
 SET_DUAL_CARRIAGE CARRIAGE=0
 G28 X
 T[initial_extruder]
-M104 T{1 - initial_extruder} S{temperature_vitrification[1 - initial_extruder]}
+M104 T{1 - initial_extruder} S{min(nozzle_temperature_initial_layer[1 - initial_extruder], 180)} ; parked: never below 180C
 
 {else}
 ; ===== one nozzle after the other =====
 ; (the following T command parks the carriage that primed first;
-;  the other nozzle stays cold at its parking position until its turn)
+;  the other nozzle waits preheated at its parking position until its turn)
 
 {if is_extruder_used[0] and initial_extruder != 0}
 ; prime nozzle 0 (not the initial one)
 T0
 G0 Z5 F600
 G0 X5 Y95 F6840.0
-G0 Z0 F240.0                                 ; cold nozzle sealed on the bed
+G0 Z0 F240.0                                 ; nozzle sealed on the bed
 M104 T0 S{nozzle_temperature_initial_layer[0]}
 TEMPERATURE_WAIT SENSOR=extruder MINIMUM={nozzle_temperature_initial_layer[0] - 2}
 G1 Y83 Z{0.75*nozzle_diameter[0]} E{min(3, 18.75*nozzle_diameter[0]*nozzle_diameter[0])} F600   ; lift off while refilling the nozzle
@@ -155,7 +155,7 @@ G0 Y115 F12000           ; fast 20 mm Y move tears off the strand
 M204 S100
 G0 Z2 F240.0
 G92 E0
-M104 T0 S{temperature_vitrification[0]}
+M104 T0 S{min(nozzle_temperature_initial_layer[0], 180)} ; parked: never below 180C
 {endif}
 
 {if is_extruder_used[1] and initial_extruder != 1}
@@ -163,7 +163,7 @@ M104 T0 S{temperature_vitrification[0]}
 T1
 G0 Z5 F600
 G0 X319 Y95 F6840.0
-G0 Z0 F240.0                                 ; cold nozzle sealed on the bed
+G0 Z0 F240.0                                 ; nozzle sealed on the bed
 M104 T1 S{nozzle_temperature_initial_layer[1]}
 TEMPERATURE_WAIT SENSOR=extruder1 MINIMUM={nozzle_temperature_initial_layer[1] - 2}
 G1 Y83 Z{0.75*nozzle_diameter[1]} E{min(3, 18.75*nozzle_diameter[1]*nozzle_diameter[1])} F600   ; lift off while refilling the nozzle
@@ -180,7 +180,7 @@ G0 Y115 F12000           ; fast 20 mm Y move tears off the strand
 M204 S100
 G0 Z2 F240.0
 G92 E0
-M104 T1 S{temperature_vitrification[1]}
+M104 T1 S{min(nozzle_temperature_initial_layer[1], 180)} ; parked: never below 180C
 {endif}
 
 ; prime initial nozzle
@@ -188,7 +188,7 @@ M104 T1 S{temperature_vitrification[1]}
 T[initial_extruder]
 G0 Z5 F600
 G0 X{(initial_extruder == 0 ? 5 : 319)} Y95 F6840.0
-G0 Z0 F240.0                                 ; cold nozzle sealed on the bed
+G0 Z0 F240.0                                 ; nozzle sealed on the bed
 M104 S{nozzle_temperature_initial_layer[initial_extruder]}
 TEMPERATURE_WAIT SENSOR=extruder{if initial_extruder == 1}1{endif} MINIMUM={nozzle_temperature_initial_layer[initial_extruder] - 2}
 {if plate_name =~/.*IDEXDupl.*/ || plate_name =~/.*IDEXCopy.*/ || plate_name =~/.*IDEXMirr.*/}
