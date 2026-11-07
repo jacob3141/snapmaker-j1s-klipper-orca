@@ -77,14 +77,13 @@ The end G-code is inherited **unchanged**. Its commands (`M104`, `T0`/`T1`, …)
 by the Snapmaker compatibility macros.
 
 The toolchange G-code ([`src/change_filament_gcode.gcode`](src/change_filament_gcode.gcode))
-is the Snapmaker original with two changes. It cools the old nozzle by 70 °C, but never below 180 °C, and heats the
-new one to the temperature of the new filament. Printing continues as soon as the new nozzle
-is 5 °C below its target, without waiting for the temperature to settle. OrcaSlicer's preheat
-(`preheat_time`) keeps working: it heats the next nozzle ahead of the toolchange and skips the
-cooldown when a nozzle is needed again soon. The G-code takes over OrcaSlicer's ooze prevention,
-which also waits with `M109` when the first tool is selected and so delays the print start
-(all prints that use T1). The process presets switch this off with
-`standby_temperature_delta = 0`. **System process presets still cause that wait.**
+is the Snapmaker original with one change: printing continues as soon as the new nozzle is
+5 °C below its target, without waiting for the temperature to settle.
+
+The process presets switch OrcaSlicer's ooze prevention off (`ooze_prevention = 0`). A parked
+nozzle stays at its print temperature and is sealed by its parking position. **System process
+presets keep ooze prevention on:** they cool the parked nozzle by 70 °C and add a waiting `M109`
+to every tool selection, including the first one in all prints that use T1.
 
 ### What the start G-code does
 
@@ -94,8 +93,8 @@ which also waits with `M109` when the first tool is selected and so delays the p
 - **Bed heating:** there is no LED animation. While the bed heats, it moves to Z10 and the nozzles in use preheat to 140 °C. The print continues as soon as the bed reaches its minimum temperature. It does not wait for the temperature to settle, and it does not wait for the 140 °C.
 - **Nozzle sealing:** each nozzle moves to the start of its prime line and is lowered to Z0, which seals it. Then it heats to its target. Priming starts as soon as the minimum temperature is reached.
 - **Prime line position:** prime lines run along Y in the X zones only one head can reach: T0 at X5, T1 at X319, symmetric around the bed centre X162. Each nozzle draws a fat line, steps over and draws a return line.
-- **Cool down and tear off:** the nozzle stays at the end of the prime line. The heater is off and the part cooling fan runs at 100 % until the nozzle reaches 200 °C. A fast 20 mm Y move then tears off the cooled strand.
-- **Print start:** after the tear-off the nozzle holds 180 °C, so OrcaSlicer can retract and unretract around its first travel. On the exact first point of the print, right before the first extrusion, it is lowered to Z0 and heats up there, sealed. The print starts as soon as the nozzle is 5 °C below its target temperature. It does not wait for the temperature to settle. **Exception:** with a prime tower, or with a system process preset and T1, OrcaSlicer needs the nozzle hot before its first travel. It then heats up sealed beside the prime line, waits for `M109` with the part cooling fan at 100 % to damp the overshoot, and only touches down briefly on the start point.
+- **Cool down and tear off:** the nozzle stays at the end of the prime line. The heater is off and the part cooling fan runs at 100 % until the nozzle reaches 200 °C. A jerk in X to the parking position then tears off the strand and seals the nozzle. With both nozzles priming together, the jerk stops 2 mm short of the parking positions and `G28 X` finishes the way.
+- **Print start:** after the tear-off the nozzle holds 180 °C, so OrcaSlicer can retract and unretract around its first travel. On the exact first point of the print, right before the first extrusion, it is lowered to Z0 and heats up there, sealed. The print starts as soon as the nozzle is 5 °C below its target temperature. It does not wait for the temperature to settle. **Exception:** with a prime tower, or with a system process preset and T1, OrcaSlicer needs the nozzle hot before its first travel. It then heats up sealed beside the prime line, waits for `M109`, and only touches down briefly on the start point.
 - **Both nozzles used:** with both nozzles in use (and not an IDEX duplication/mirror plate), both nozzles prime **at the same time** in Klipper `dual_carriage` MIRROR mode.
 - **Scaling with the nozzle:** prime line height, width and amount scale with the nozzle diameter. They are capped at Klipper's `max_extrude_cross_section` (the default `4 × 0.4²` from `printer.cfg`).
 - **IDEX modes:** plate names containing `IDEXDupl`/`IDEXCopy`, `IDEXMirr` or `IDEXBack` switch the IDEX mode with `M605`, as in the original Snapmaker profiles.

@@ -4,13 +4,14 @@
 ;           while the bed heats, the nozzles preheat to 140C with the bed at Z10;
 ;           then heated - priming starts as soon as the minimum temperature is reached;
 ;           after priming the nozzle stays on the line end and cools to 200C (fans full),
-;           tears off with a short jerk, is sealed again at the print start and reheats there;
+;           jerks to its parking position, which tears off the strand and seals the nozzle,
+;           is sealed again at the print start and reheats there;
 ;           the print starts 5C below the target temperature;
 ;           prime lines along Y in the exclusive X zones (T0 X5 / T1 X319, symmetric around X162);
 ;           with both nozzles in use they prime together (dual_carriage MIRROR mode);
 ;           prime line height, width and amount scale with the nozzle diameter d
 ; Uses the Snapmaker compatibility macros of snapmaker-j1-macros.cfg
-; (T0/T1, M605, M104/M140, M204, M205, M355)
+; (T0/T1, M605, M104/M140, M204, M205, M355, _SNAPMAKER_PARK_CARRIAGE)
 ; Printer : [printer_preset]
 ; Profile : [print_preset]
 ; Plate   : [plate_name]
@@ -73,7 +74,7 @@ G92 Z0 ;reset z
 ;   Y83 -> Y15 fat line (width 2*d), step 1.75*d toward the bed,
 ;   Y15 -> Y95 return line (width 1.25*d),
 ;   stay at the line end: heater off, part fan 100 % until the nozzle is at 200C,
-;   then a fast 20 mm Y move to Y115 -> the cooled strand tears off without oozing.
+;   then a jerk in X to the parking position: tears off the cooled strand and seals the nozzle.
 ;   No E moves after the line: OrcaSlicer assumes an unretracted nozzle.
 ; Print start: OrcaSlicer travels to the first point of the print. There, right before the first
 ; extrusion, change_extrusion_role_gcode of the printer preset lowers the nozzle to Z0 (sealed),
@@ -117,7 +118,7 @@ TEMPERATURE_WAIT SENSOR=extruder1 MAXIMUM=200
 M107 P0
 M107 P1
 M204 S3000
-G0 Y115 F12000           ; fast 20 mm Y move tears off the strands
+G0 X-11 F12000           ; jerk toward the parking positions tears off the strands (G28 X below finishes the way)
 M204 S100
 G0 Z2 F240.0
 G92 E0
@@ -126,7 +127,7 @@ SYNC_EXTRUDER_MOTION EXTRUDER=extruder1 MOTION_QUEUE=extruder1
 SET_DUAL_CARRIAGE CARRIAGE=0
 G28 X
 T[initial_extruder]
-M104 T{1 - initial_extruder} S{min(nozzle_temperature_initial_layer[1 - initial_extruder], 180)} ; parked: never below 180C
+M104 T{1 - initial_extruder} S{nozzle_temperature_initial_layer[1 - initial_extruder]} ; stays at print temperature, sealed in its parking position
 
 {else}
 ; ===== one nozzle after the other =====
@@ -151,11 +152,11 @@ M106 S255
 TEMPERATURE_WAIT SENSOR=extruder MAXIMUM=200
 M107
 M204 S3000
-G0 Y115 F12000           ; fast 20 mm Y move tears off the strand
+_SNAPMAKER_PARK_CARRIAGE ; jerk to the parking position tears off the strand and seals the nozzle
 M204 S100
 G0 Z2 F240.0
 G92 E0
-M104 T0 S{min(nozzle_temperature_initial_layer[0], 180)} ; parked: never below 180C
+M104 T0 S{nozzle_temperature_initial_layer[0]} ; stays at print temperature, sealed in its parking position
 {endif}
 
 {if is_extruder_used[1] and initial_extruder != 1}
@@ -176,11 +177,11 @@ M106 S255
 TEMPERATURE_WAIT SENSOR=extruder1 MAXIMUM=200
 M107
 M204 S3000
-G0 Y115 F12000           ; fast 20 mm Y move tears off the strand
+_SNAPMAKER_PARK_CARRIAGE ; jerk to the parking position tears off the strand and seals the nozzle
 M204 S100
 G0 Z2 F240.0
 G92 E0
-M104 T1 S{min(nozzle_temperature_initial_layer[1], 180)} ; parked: never below 180C
+M104 T1 S{nozzle_temperature_initial_layer[1]} ; stays at print temperature, sealed in its parking position
 {endif}
 
 ; prime initial nozzle
@@ -208,7 +209,7 @@ TEMPERATURE_WAIT SENSOR=extruder1 MAXIMUM=200
 {endif}
 M107
 M204 S3000
-G0 Y115 F12000           ; fast 20 mm Y move tears off the strand
+_SNAPMAKER_PARK_CARRIAGE ; jerk to the parking position tears off the strand and seals the nozzle
 M204 S100
 G0 Z2 F240.0
 G92 E0
