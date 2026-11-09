@@ -1,3 +1,5 @@
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/jacob3141)
+
 # Snapmaker J1 / J1s – Klipper presets for OrcaSlicer
 
 > **Based on the official Snapmaker J1 presets that ship with OrcaSlicer.** Those presets
