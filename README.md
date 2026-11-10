@@ -22,7 +22,8 @@ skipped silently during import. If presets are missing after the import, add the
 3. Select the printer **Snapmaker J1 Klipper (0.x nozzle)** that matches your nozzle.
 4. Select a process **0.xx … @Snapmaker J1 Klipper (0.x nozzle)**, for example
    `0.12 Fine`. They are listed under *User presets*.
-5. Optional: select the filament **Generic PETG on Snapmaker J1**.
+5. Optional: select the filament **Generic PETG on Snapmaker J1**, or **Generic Rapid PETG on Snapmaker J1**
+   for fast-printing PETG.
 6. Set your printer's address (Moonraker) at the Wi-Fi/connection icon next to the printer.
    The presets contain no host.
 
@@ -47,7 +48,7 @@ OrcaSlicer combines three kinds of presets for every print:
 | Kind | Decides | In this repository |
 |---|---|---|
 | **Printer** | machine, nozzle size, firmware flavor, start/end G-code | one per nozzle size |
-| **Filament** | temperatures, flow, cooling, retraction, max. volumetric speed | one tuned matte PETG; any other OrcaSlicer filament works too |
+| **Filament** | temperatures, flow, cooling, retraction, max. volumetric speed | a tuned PETG and a rapid PETG variant; any other OrcaSlicer filament works too |
 | **Process** | layer height, line widths, speeds, walls, infill, seam, support | 20: every layer height OrcaSlicer offers for the J1, per nozzle size |
 
 A preset stores only its differences from the preset it `inherits`. All presets here
@@ -69,7 +70,7 @@ differs from that preset only in these settings:
 | G-code flavor | `marlin2` | `klipper` | Klipper |
 | Emit machine limits to G-code | yes | no | Klipper's limits come from `printer.cfg`. Here the values below are used only for OrcaSlicer's time estimate. |
 | Max. acceleration X / Y / extruding / travel | 10000 / 8000 / 10000 / 10000 | 8000 / 5000 / 8000 / 8000 | closer to what the Klipper configuration allows |
-| Max. speed X / Y | 350 / 300 | 200 / 200 | same reason |
+| Max. speed X / Y | 350 / 300 | 300 / 300 | the speed of the performance mode the start G-code selects |
 | Max. jerk X / Y | 10 | 5 | sent as `M205 V` → Klipper `square_corner_velocity` |
 | Nozzle type | – | brass | the nozzles these presets were tuned with |
 | Thumbnails | 300×300 | 48×48 + 300×300 PNG | small preview for Mainsail/Fluidd/KlipperScreen file lists |
@@ -91,6 +92,7 @@ to every tool selection, including the first one in all prints that use T1.
 
 [`src/start_gcode.gcode`](src/start_gcode.gcode):
 
+- **Performance mode:** the start G-code selects the Snapmaker noise mode `LOUD` (`M2000 S113 M3`): 300 mm/s and 8000 mm/s² with spreadCycle drivers, instead of `NORMAL` with 200 mm/s. The travels of the process presets (300 mm/s) run at full speed. The mode stays set after the print; select another one on the printer if you want it quieter.
 - **No purge blobs and no cleaning preheat.** These only make the nozzle ooze.
 - **Bed heating:** there is no LED animation. While the bed heats, it moves to Z10 and the nozzles in use preheat to 140 °C. The print continues as soon as the bed reaches its minimum temperature. It does not wait for the temperature to settle, and it does not wait for the 140 °C.
 - **Nozzle sealing:** each nozzle moves to the start of its prime line and is lowered to Z0, which seals it. Then it heats to its target. Priming starts as soon as the minimum temperature is reached.
@@ -192,6 +194,20 @@ Notes:
   When stringing increases or the line width becomes uneven, check the nozzle.
 - **Other PETGs:** for the best result, calibrate flow ratio and pressure advance for each
   spool brand.
+
+### Filament preset – `Generic Rapid PETG on Snapmaker J1`
+
+A copy of `Generic PETG on Snapmaker J1` for fast-printing ("rapid") PETG. It inherits from
+the same `Elegoo PETG @System` and differs from `Generic PETG on Snapmaker J1` only in:
+
+| Setting | Generic PETG | Generic Rapid PETG |
+|---|---|---|
+| Max. volumetric speed | 8 mm³/s | 15 mm³/s |
+| Flow ratio | 1.00 | 0.96 |
+| Part cooling fan | 20 % to 40 % | 40 % to 80 %, 80 % for layers under 5 s |
+| Min. print speed when slowing down for cooling | from the parent | 30 mm/s |
+| Retraction | 0.8 mm at 25 mm/s | 1.4 mm at 45 mm/s |
+| Wipe while retracting | off | on |
 
 ## Repository layout
 

@@ -1,6 +1,7 @@
 ; Model: Snapmaker J1 ({nozzle_diameter[0]}/{nozzle_diameter[1]}) - Klipper (KlipperSnapmakerJ1)
 ; Based on https://github.com/macdylan/3dp-configs (Update 20240922)
-; Modified: no cleaning preheat, no purge blobs;
+; Modified: performance mode LOUD (300 mm/s) instead of NORMAL (200 mm/s);
+;           no cleaning preheat, no purge blobs;
 ;           while the bed heats, the nozzles preheat to 140C with the bed at Z10;
 ;           then heated - priming starts as soon as the minimum temperature is reached;
 ;           after priming the nozzle stays on the line end and cools to 200C (fans full),
@@ -11,7 +12,7 @@
 ;           with both nozzles in use they prime together (dual_carriage MIRROR mode);
 ;           prime line height, width and amount scale with the nozzle diameter d
 ; Uses the Snapmaker compatibility macros of snapmaker-j1-macros.cfg
-; (T0/T1, M605, M104/M140, M204, M205, M355, _SNAPMAKER_PARK_CARRIAGE)
+; (T0/T1, M605, M104/M140, M204, M205, M355, M2000, _SNAPMAKER_PARK_CARRIAGE)
 ; Printer : [printer_preset]
 ; Profile : [print_preset]
 ; Plate   : [plate_name]
@@ -26,6 +27,7 @@ M83 ; relative E
 
 T[initial_extruder]
 
+M2000 S113 M3 ;performance mode LOUD (macro -> SNAPMAKER_NOISE_MODE): 300 mm/s, 8000 mm/s2, spreadCycle; stays set after the print
 M205 V[machine_max_jerk_x] ;square corner velocity (macro -> SET_VELOCITY_LIMIT)
 
 {if plate_name =~/.*IDEXDupl.*/ || plate_name =~/.*IDEXCopy.*/ }

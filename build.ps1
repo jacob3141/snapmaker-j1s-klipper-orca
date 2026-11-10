@@ -7,7 +7,7 @@
     bundle.json        bundle id/name/version/author (bump "version" on every release)
     printer.json       settings shared by all printer presets (on top of the Snapmaker system presets)
     start_gcode.gcode  machine start G-code (nozzle-parametric)
-    change_filament_gcode.gcode  toolchange G-code (Snapmaker original + cooldown of the old nozzle)
+    change_filament_gcode.gcode  toolchange G-code (Snapmaker original, no settling wait)
     process-0.4.json   the hand-tuned 0.12 mm / 0.4 nozzle process preset; all others are derived from it
     filament/*.json    filament presets, used as is
 
