@@ -80,8 +80,14 @@ The end G-code is inherited **unchanged**. Its commands (`M104`, `T0`/`T1`, …)
 by the Snapmaker compatibility macros.
 
 The toolchange G-code ([`src/change_filament_gcode.gcode`](src/change_filament_gcode.gcode))
-is the Snapmaker original with one change: printing continues as soon as the new nozzle is
-5 °C below its target, without waiting for the temperature to settle.
+is the Snapmaker original with two changes:
+
+- The old nozzle moves to its parking position at print height (`_SNAPMAKER_PARK_CARRIAGE`)
+  before the tool select. The move tears off the strand and seals the nozzle. The tool select
+  macro would otherwise lift Z by 2 mm first and pull thin strings. It still lifts afterwards,
+  in the parking position, so the new nozzle travels to the print 2 mm higher.
+- Printing continues as soon as the new nozzle is 5 °C below its target, without waiting for
+  the temperature to settle.
 
 The process presets switch OrcaSlicer's ooze prevention off (`ooze_prevention = 0`). A parked
 nozzle stays at its print temperature and is sealed by its parking position. **System process
@@ -129,7 +135,7 @@ like the system preset `0.12 Fine @Snapmaker J1 (0.4 nozzle)`:
 | Speeds | inner wall / sparse / solid infill / gap fill 120 mm/s, outer wall 60 mm/s |
 | Seam | aligned, back |
 | Sparse infill | gyroid |
-| Skirt / brim | 4 skirt loops, no brim |
+| Skirt / brim / prime tower | 4 skirt loops, no brim, no prime tower |
 | Support | off (interface filament 1 if you switch it on) |
 | Overhangs | extra perimeters on overhangs, slow down for curled perimeters |
 | Arc fitting | off |
@@ -148,7 +154,7 @@ preset with the same nozzle and layer height, and on top of that:
 - The values `0.12 Fine` gets from *0.16 Optimal* are set explicitly, because the system
   presets differ in them: 3 walls, elephant foot 0.15, bridge flow 1, bridge 50 mm/s, support
   threshold 25°, first layer 50 mm/s, first-layer infill 80 mm/s.
-- Everything else is the same as in `0.12 Fine`: speeds, seam, infill, no support, no brim,
+- Everything else is the same as in `0.12 Fine`: speeds, seam, infill, no support, no brim, no prime tower,
   overhang handling.
 
 | Nozzle | Layer heights (quality) | Outer wall | Inner wall / solid | Top surface | First layer width | Top shell |
@@ -202,6 +208,7 @@ the same `Elegoo PETG @System` and differs from `Generic PETG on Snapmaker J1` o
 
 | Setting | Generic PETG | Generic Rapid PETG |
 |---|---|---|
+| Nozzle temperature | 245 °C first layer, then 240 °C | 230 °C first layer, then 225 °C |
 | Max. volumetric speed | 8 mm³/s | 15 mm³/s |
 | Flow ratio | 1.00 | 0.96 |
 | Part cooling fan | 20 % to 40 % | 40 % to 80 %, 80 % for layers under 5 s |

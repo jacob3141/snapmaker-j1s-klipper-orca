@@ -66,10 +66,10 @@
 	"inherits": "Elegoo PETG @System",
 	"name": "Generic Rapid PETG on Snapmaker J1",
 	"nozzle_temperature": [
-		"240"
+		"225"
 	],
 	"nozzle_temperature_initial_layer": [
-		"245"
+		"230"
 	],
 	"overhang_fan_speed": [
 		"100"

@@ -1,6 +1,7 @@
 {
 	"brim_type": "no_brim",
 	"enable_arc_fitting": "0",
+	"enable_prime_tower": "0",
 	"extra_perimeters_on_overhangs": "1",
 	"from": "User",
 	"gap_infill_speed": "120",
