@@ -68,10 +68,11 @@ differs from that preset only in these settings:
 | Setting | Snapmaker J1 (Marlin) | Snapmaker J1 Klipper | Why |
 |---|---|---|---|
 | G-code flavor | `marlin2` | `klipper` | Klipper |
-| Emit machine limits to G-code | yes | no | Klipper's limits come from `printer.cfg`. Here the values below are used only for OrcaSlicer's time estimate. |
-| Max. acceleration X / Y / extruding / travel | 10000 / 8000 / 10000 / 10000 | 8000 / 5000 / 8000 / 8000 | closer to what the Klipper configuration allows |
-| Max. speed X / Y | 350 / 300 | 300 / 300 | the speed of the performance mode the start G-code selects |
-| Max. jerk X / Y | 10 | 5 | sent as `M205 V` → Klipper `square_corner_velocity` |
+| Emit machine limits to G-code | yes | no | Klipper's limits come from `printer.cfg`. OrcaSlicer still uses the values below for its time estimate and caps the print accelerations in the G-code at the extruding limit (and at X / Y). |
+| Max. acceleration X / Y / extruding / travel | 10000 / 8000 / 10000 / 10000 | 8000 / 5000 / 4000 / 8000 | tuned on the printer |
+| Max. acceleration retracting / E / Z | – | 3000 / 4000 / 40 | tuned on the printer |
+| Max. speed X / Y | 350 / 300 | 200 / 200 | the speed of the noise mode the start G-code selects |
+| Max. jerk X / Y / Z / E | 10 | 2 / 2 / 1 / 1 | tuned on the printer; X is sent as `M205 V` → Klipper `square_corner_velocity` |
 | Nozzle type | – | brass | the nozzles these presets were tuned with |
 | Thumbnails | 300×300 | 48×48 + 300×300 PNG | small preview for Mainsail/Fluidd/KlipperScreen file lists |
 | Start G-code | Snapmaker original | rewritten (see below) | |
@@ -98,7 +99,7 @@ to every tool selection, including the first one in all prints that use T1.
 
 [`src/start_gcode.gcode`](src/start_gcode.gcode):
 
-- **Performance mode:** the start G-code selects the Snapmaker noise mode `LOUD` (`M2000 S113 M3`): 300 mm/s and 8000 mm/s² with spreadCycle drivers, instead of `NORMAL` with 200 mm/s. The travels of the process presets (300 mm/s) run at full speed. The mode stays set after the print; select another one on the printer if you want it quieter.
+- **Noise mode:** the start G-code selects the Snapmaker noise mode `NORMAL` (`M2000 S113 M1`): 200 mm/s with the quiet stealthChop drivers. `LOUD` (300 mm/s, spreadCycle) is faster but much louder; `SILENT` limits every move to 75 mm/s. Travels of the process presets (300 mm/s) therefore run at 200 mm/s. The mode stays set after the print.
 - **No purge blobs and no cleaning preheat.** These only make the nozzle ooze.
 - **Bed heating:** there is no LED animation. While the bed heats, it moves to Z10 and the nozzles in use preheat to 140 °C. The print continues as soon as the bed reaches its minimum temperature. It does not wait for the temperature to settle, and it does not wait for the 140 °C.
 - **Nozzle sealing:** each nozzle moves to the start of its prime line and is lowered to Z0, which seals it. Then it heats to its target. Priming starts as soon as the minimum temperature is reached.
@@ -208,9 +209,9 @@ the same `Elegoo PETG @System` and differs from `Generic PETG on Snapmaker J1` o
 
 | Setting | Generic PETG | Generic Rapid PETG |
 |---|---|---|
-| Nozzle temperature | 245 °C first layer, then 240 °C | 230 °C first layer, then 225 °C |
+| Nozzle temperature | 245 °C first layer, then 240 °C | 240 °C first layer, then 235 °C |
 | Max. volumetric speed | 8 mm³/s | 15 mm³/s |
-| Flow ratio | 1.00 | 0.96 |
+| Flow ratio | 1.00 | 0.98 |
 | Part cooling fan | 20 % to 40 % | 40 % to 80 %, 80 % for layers under 5 s |
 | Min. print speed when slowing down for cooling | from the parent | 30 mm/s |
 | Retraction | 0.8 mm at 25 mm/s | 1.4 mm at 45 mm/s |
